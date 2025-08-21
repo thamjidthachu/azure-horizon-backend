@@ -5,6 +5,10 @@ WORKDIR /app
 
 # Install only essential system dependencies
 RUN apt-get update && apt-get install -y \
+    vim \
+    libpq-dev \
+    python-dev \
+    python3-psycopg2 \
     curl \
     gcc \
     && rm -rf /var/lib/apt/lists/*
