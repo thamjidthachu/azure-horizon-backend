@@ -7,7 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     vim \
     libpq-dev \
-    python-dev \
+    python3-dev \
     python3-psycopg2 \
     curl \
     gcc \
