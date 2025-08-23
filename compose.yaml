@@ -1,20 +1,4 @@
 services:
-
-  postgres:
-    container_name: the_database
-    image: postgres:15
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - the_sarene_escape-postgres-data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
       
   backend:
     container_name: the_backend
@@ -31,6 +15,9 @@ services:
         reservations:
           cpus: '0.05'
           memory: 256M
+    volumes:
+      - the_azure_horizon-static-data:/app/staticfiles
+      - the_azure_horizon-media-data:/app/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,6 +28,24 @@ services:
       timeout: 5s
       retries: 3
 
+  postgres:
+    container_name: the_database
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - the_azure_horizon-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
 volumes:
-  the_sarene_escape-postgres-data:
+  the_azure_horizon-postgres-data:
+  the_azure_horizon-media-data:
+  the_azure_horizon-static-data:

@@ -47,7 +47,7 @@ echo "PostgreSQL is up - executing command"
 python manage.py migrate --noinput
 
 # Collect static files
-python manage.py collectstatic --noinput
+# python manage.py collectstatic --noinput
 
 # Start server
 python manage.py runserver "0.0.0.0:${PORT:-8000}"
