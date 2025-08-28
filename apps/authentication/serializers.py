@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from apps.authentication.models import User
+from .tasks import send_welcome_email_task
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -61,8 +62,13 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         
-        # Send welcome email
-        # self.send_welcome_email(user, validated_data['password'])
+        # Send welcome email asynchronously using Celery
+        send_welcome_email_task.delay(
+            user_id=user.id,
+            username=user.username,
+            email=user.email,
+            password=validated_data['password']
+        )
         
         return user
 

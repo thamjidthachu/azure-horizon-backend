@@ -16,7 +16,7 @@ class HealthCheckView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, format=None):
-        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+        return Response({'status': 'ok', 'application': 'Azure Horizon', "version": "0.0.1"}, status=status.HTTP_200_OK)
 
 
 class UserCheckView(RetrieveAPIView):

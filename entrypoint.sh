@@ -43,11 +43,17 @@ done
 
 echo "PostgreSQL is up - executing command"
 
+# Create directories if they don't exist (with proper permissions)
+mkdir -p /app/staticfiles
+mkdir -p /app/media
+chmod 755 /app/staticfiles
+chmod 755 /app/media
+
 # Run migrations
 python manage.py migrate --noinput
 
-# Collect static files
-# python manage.py collectstatic --noinput
+# Collect static files 
+python manage.py collectstatic --noinput --clear
 
 # Start server
-python manage.py runserver "0.0.0.0:${PORT:-8000}"
+exec python manage.py runserver "0.0.0.0:${PORT:-8000}"

@@ -1,8 +1,13 @@
-services:
-      
+x-backend: &backend-image
+  image: the_backend_image:latest
+  build: 
+    context: .
+    dockerfile: Dockerfile
+
+services:      
   backend:
+    <<: *backend-image
     container_name: the_backend
-    build: .
     env_file:
       - .env
     ports:
@@ -21,12 +26,83 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://resort-apiv1.thamjidthachu.dev/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  celery-worker:
+    image: the_backend_image:latest
+    container_name: the_celery_worker
+    env_file:
+      - .env
+    command: celery -A resortproject worker --loglevel=info
+    volumes:
+      - the_azure_horizon-media-data:/app/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '.05'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 256M
+
+  celery-beat:
+    image: the_backend_image:latest
+    container_name: the_celery_beat
+    env_file:
+      - .env
+    command: celery -A resortproject beat --loglevel=info
+    volumes:
+      - the_azure_horizon-media-data:/app/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '.05'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 128M
+
+  redis:
+    container_name: the_redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '.05'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 128M
 
   postgres:
     container_name: the_database
@@ -43,7 +119,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 
 volumes:
   the_azure_horizon-postgres-data:

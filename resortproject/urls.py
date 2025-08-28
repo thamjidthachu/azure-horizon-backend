@@ -26,5 +26,5 @@ urlpatterns = [
     path('authentication/', include("django.contrib.auth.urls")),  # Django's built-in auth
     path('api/auth/', include('apps.authentication.urls')),  # API authentication endpoints
     path('services/', include('apps.service.urls')),
-    path('healthz', HealthCheckView.as_view(), name='healthz'),
+    path('healthz/', HealthCheckView.as_view(), name='healthz'),  # Add trailing slash
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
