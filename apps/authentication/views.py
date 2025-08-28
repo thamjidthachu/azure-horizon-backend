@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import status, generics
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,6 +17,28 @@ class HealthCheckView(APIView):
 
     def get(self, request, format=None):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+
+
+class UserCheckView(RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    lookup_field = 'username'
+
+    def get(self, request, *args, **kwargs):
+        username = request.query_params.get('username')
+        email = request.query_params.get('email')
+        if username:
+            user = User.objects.filter(username=username).first()
+            if user:
+                return Response({'status': True}, status=status.HTTP_200_OK)
+
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user:
+                return Response({'status': True}, status=status.HTTP_200_OK)
+
+        return Response({'status': False}, status=status.HTTP_404_NOT_FOUND)
 
 class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]

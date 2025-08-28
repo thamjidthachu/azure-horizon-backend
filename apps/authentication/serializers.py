@@ -62,7 +62,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         
         # Send welcome email
-        self.send_welcome_email(user, validated_data['password'])
+        # self.send_welcome_email(user, validated_data['password'])
         
         return user
 
