@@ -64,7 +64,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         
         # Send welcome email asynchronously using Celery
         send_welcome_email_task.delay(
-            user_id=user.id,
             username=user.username,
             email=user.email,
             password=validated_data['password']

@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @shared_task(bind=True, max_retries=3)
-def send_welcome_email_task(self, user_id, username, email, password):
+def send_welcome_email_task(self,username, email, password):
     """
     Celery task to send welcome email to new users
     """

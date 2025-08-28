@@ -1,8 +1,8 @@
 x-backend: &backend-image
-  image: the_backend_image:latest
   build: 
     context: .
     dockerfile: Dockerfile
+  image: the_backend_image:latest
 
 services:      
   backend:
@@ -10,16 +10,9 @@ services:
     container_name: the_backend
     env_file:
       - .env
+    entrypoint: ["/app/entrypoint.sh"]
     ports:
       - "8000:8000"
-    deploy:
-      resources:
-        limits:
-          cpus: '.05'
-          memory: 256M
-        reservations:
-          cpus: '0.05'
-          memory: 256M
     volumes:
       - the_azure_horizon-static-data:/app/staticfiles
       - the_azure_horizon-media-data:/app/media
@@ -30,61 +23,41 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz/"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthz/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   celery-worker:
-    image: the_backend_image:latest
+    <<: *backend-image
     container_name: the_celery_worker
     env_file:
       - .env
-    command: celery -A resortproject worker --loglevel=info
+    entrypoint: []
+    command: ["celery", "-A", "resortproject", "worker", "--loglevel=info"]
     volumes:
       - the_azure_horizon-media-data:/app/media
     depends_on:
-      backend:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - backend
+      - postgres
+      - redis
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '.05'
-          memory: 256M
-        reservations:
-          cpus: '0.05'
-          memory: 256M
 
   celery-beat:
-    image: the_backend_image:latest
+    <<: *backend-image
     container_name: the_celery_beat
     env_file:
       - .env
-    command: celery -A resortproject beat --loglevel=info
+    entrypoint: []
+    command: ["celery", "-A", "resortproject", "beat", "--loglevel=info"]
     volumes:
       - the_azure_horizon-media-data:/app/media
     depends_on:
-      backend:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - backend
+      - postgres
+      - redis
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '.05'
-          memory: 128M
-        reservations:
-          cpus: '0.05'
-          memory: 128M
 
   redis:
     container_name: the_redis
@@ -95,14 +68,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '.05'
-          memory: 128M
-        reservations:
-          cpus: '0.05'
-          memory: 128M
 
   postgres:
     container_name: the_database
