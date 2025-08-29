@@ -20,7 +20,7 @@ def send_welcome_email_task(self, username, email, password):
             'username': username,
             'email': email,
             'password': password,
-            'login_url': f'{settings.NEXT_FRONTEND_BASE_URL}/login',
+            'base_url': f'{settings.NEXT_FRONTEND_BASE_URL}',
             'company_name': 'Azure Horizon',
             'current_year': '2025'
         }
