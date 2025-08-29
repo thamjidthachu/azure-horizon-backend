@@ -34,6 +34,7 @@
             color: #ffffff;
             margin: 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
         }
         
         .tagline {
@@ -359,8 +360,8 @@
     <div class="email-container">
         <!-- Header -->
         <div class="header">
-            <h1 class="logo">Azure Horizon</h1>
-            <p class="tagline">Discover harmony and elegance</p>
+            <a href="{{ base_url }}" class="logo">Azure Horizon</a>
+            <p class="tagline">Beyond rest, into peace.</p>
         </div>
         
         <!-- Main Content -->
@@ -533,13 +534,6 @@
                     </table>
                     <!--<![endif]-->
                 </div>
-                
-                <!-- Fallback text link -->
-                <p style="color: #64748b; font-size: 14px; margin: 16px 0 0 0; text-align: center;">
-                    Button not working? Copy and paste this link into your browser: 
-                    <br><br>
-                    <span style="background-color: #f8fafc; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-family: monospace; font-size: 14px; color: #0f172a; display: inline-block; margin: 8px 0; word-break: break-all;">{{ base_url }}/login</span>
-                </p>
             </div>
             
             <p style="color: #64748b; font-size: 14px; text-align: center; margin: 24px 0 0 0;">
@@ -551,7 +545,7 @@
         <div class="footer">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4 class="footer-title">Azure Horizon</h4>
+                    <a class="logo" href="{{ base_url }}"><h4 class="footer-title">Azure Horizon</h4> </a>
                     <p class="footer-text">
                         From peaceful retreats surrounded by nature to indulgent luxury experiences, every moment is designed to refresh your soul.
                     </p>
