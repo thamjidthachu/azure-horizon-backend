@@ -5,7 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
 
 from .serializers import UserSerializer, RegisterSerializer
 
@@ -90,6 +91,46 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'message': 'Login successful.'
         }, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, format=None):
+        try:
+            # Blacklist refresh token (if provided)
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+
+            # Blacklist access token (from Authorization header)
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                access_token_str = auth_header.split(" ")[1]
+                access_token = AccessToken(access_token_str)
+
+                # Store access token in blacklist
+                outstanding_token, _ = OutstandingToken.objects.get_or_create(
+                    jti=access_token["jti"],
+                    defaults={
+                        "token": access_token_str,
+                        "expires_at": access_token["exp"],
+                        "user": request.user,
+                    },
+                )
+                BlacklistedToken.objects.get_or_create(token=outstanding_token)
+
+            return Response(
+                {"message": "Logout successful."},
+                status=status.HTTP_200_OK
+            )
+
+        except TokenError:
+            return Response({"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
