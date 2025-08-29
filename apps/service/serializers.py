@@ -1,6 +1,7 @@
 from rest_framework import serializers
+
+from apps.authentication.serializers import UserSerializer
 from .models import File, Service, Comment, Advertisement
-from ..authentication.serializers import UserSerializer
 
 
 class FileSerializer(serializers.ModelSerializer):

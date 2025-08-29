@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from apps.authentication.models import User
-from .tasks import send_welcome_email_task
+from .tasks import send_email_message, send_welcome_email_task
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -63,32 +63,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         
         # Send welcome email asynchronously using Celery
-        send_welcome_email_task.delay(
-            username=user.username,
-            email=user.email,
-            password=validated_data['password']
+        send_email_message.delay(
+            subject="Welcome to Azure Horizon | Login Details",
+            template_name="welcome_email.html",
+            context={"user": user, "email": user.email, "password": validated_data['password']},
+            recipient_list=[user.email]
         )
-        
+
         return user
-
-    @staticmethod
-    def send_welcome_email(user, password):
-        subject = 'Welcome to Our Resort'
-        message = f"""
-        Thank you for registering with us!
-        
-        Here are your login details:
-        Username: {user.username}
-        Email: {user.email}
-        Password: {password}
-        
-        Please keep your credentials safe and do not share them with anyone.
-        
-        Best regards,
-        The Resort Team
-        """
-
-        send_mail(subject=subject, message=message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[user.email])
 
 
 class LoginSerializer(serializers.Serializer):

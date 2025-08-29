@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # apps
     'apps.authentication',
     'apps.service',
+    'apps.contacts',
 
 ]
 

@@ -53,8 +53,8 @@ def send_welcome_email_task(self, username, email, password):
         # Retry the task with exponential backoff
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
-
-def send_html_email(subject, template_name, context, recipient_list, from_email=None):
+@shared_task(bind=True, max_retries=3)
+def send_email_message(self, subject, template_name, context, recipient_list, from_email=None):
     """
     Utility function to send HTML emails with template
     
@@ -97,4 +97,4 @@ def send_html_email(subject, template_name, context, recipient_list, from_email=
         
     except Exception as e:
         logger.error(f"Failed to send HTML email: {str(e)}")
-        return False
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
