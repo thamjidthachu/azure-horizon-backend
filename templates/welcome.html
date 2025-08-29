@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Azure Horizon</title>
+    <style>
+        /* Internal CSS for better email client support */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8fafc;
+            color: #0f172a;
+            line-height: 1.6;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tagline {
+            color: #ffffff;
+            font-size: 16px;
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 24px;
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+        
+        .welcome-message {
+            font-size: 16px;
+            color: #475569;
+            margin: 0 0 24px 0;
+            text-align: center;
+        }
+        
+        .features-section {
+            margin: 32px 0;
+        }
+        
+        .features-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+        
+        .features-grid {
+            display: table;
+            width: 100%;
+            margin: 16px 0;
+        }
+        
+        .feature-item {
+            display: table-cell;
+            width: 50%;
+            padding: 16px 8px;
+            vertical-align: top;
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            border-radius: 50%;
+            margin: 0 auto 12px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            text-align: center;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .cta-section {
+            background-color: #f8fafc;
+            padding: 32px 24px;
+            text-align: center;
+            margin: 32px 0;
+            border-radius: 8px;
+        }
+        
+        .cta-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer {
+            background-color: #1f2937;
+            color: #ffffff;
+            padding: 32px 24px;
+        }
+        
+        .footer-content {
+            display: table;
+            width: 100%;
+        }
+        
+        .footer-section {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding: 0 16px;
+        }
+        
+        .footer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #14b8a6;
+            margin: 0 0 16px 0;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #d1d5db;
+            margin: 0 0 16px 0;
+            line-height: 1.5;
+        }
+        
+        .contact-info {
+            font-size: 14px;
+            color: #d1d5db;
+            margin: 8px 0;
+        }
+        
+        .social-links {
+            margin: 16px 0;
+        }
+        
+        .social-link {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background-color: #374151;
+            border-radius: 50%;
+            margin: 0 8px 0 0;
+            text-decoration: none;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            margin-top: 24px;
+            padding-top: 24px;
+            text-align: center;
+        }
+        
+        .footer-bottom-text {
+            font-size: 14px;
+            color: #9ca3af;
+            margin: 0;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .features-grid {
+                display: block;
+            }
+            
+            .feature-item {
+                display: block;
+                width: 100%;
+                padding: 16px 0;
+            }
+            
+            .footer-content {
+                display: block;
+            }
+            
+            .footer-section {
+                display: block;
+                width: 100%;
+                padding: 0;
+                margin-bottom: 24px;
+            }
+            
+            .header {
+                padding: 24px 16px;
+            }
+            
+            .content {
+                padding: 32px 16px;
+            }
+            
+            .cta-section {
+                padding: 24px 16px;
+                margin: 24px 0;
+            }
+            
+            .footer {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">Azure Horizon</h1>
+            <p class="tagline">Discover harmony and elegance</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h2 class="welcome-title">Welcome to Azure Horizon! 🌊</h2>
+            
+            <p class="welcome-message">
+                Thank you for joining our exclusive resort community. We're thrilled to have you aboard and can't wait to help you create unforgettable memories.
+            </p>
+            
+            <!-- Features Section -->
+            <div class="features-section">
+                <h3 class="features-title">What Awaits You</h3>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">🏖️</span>
+                        </div>
+                        <h4 class="feature-title">Luxury Services</h4>
+                        <p class="feature-desc">Premium spa treatments, fine dining, and world-class amenities</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">🌴</span>
+                        </div>
+                        <h4 class="feature-title">Peaceful Retreats</h4>
+                        <p class="feature-desc">Serene environments surrounded by nature's beauty</p>
+                    </div>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">⭐</span>
+                        </div>
+                        <h4 class="feature-title">Exclusive Access</h4>
+                        <p class="feature-desc">Member-only events and personalized experiences</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">📱</span>
+                        </div>
+                        <h4 class="feature-title">Easy Booking</h4>
+                        <p class="feature-desc">Seamless reservation system for all our services</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h3 class="cta-title">Ready to Begin Your Journey?</h3>
+                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 16px;">
+                    Access your account and start exploring our exclusive services and amenities.
+                </p>
+                <a href={{login_url}} class="cta-button">
+                    Login to Your Account
+                </a>
+            </div>
+            
+            <p style="color: #64748b; font-size: 14px; text-align: center; margin: 24px 0 0 0;">
+                If you have any questions, our concierge team is available 24/7 to assist you.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4 class="footer-title">Azure Horizon</h4>
+                    <p class="footer-text">
+                        From peaceful retreats surrounded by nature to indulgent luxury experiences, every moment is designed to refresh your soul.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" style="background-color: #3b82f6;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">f</span>
+                        </a>
+                        <a href="#" class="social-link" style="background-color: #1da1f2;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">t</span>
+                        </a>
+                        <a href="#" class="social-link" style="background-color: #e1306c;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">i</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">Contact Info</h4>
+                    <div class="contact-info">📍 Al Reem Island, Abu Dhabi, UAE</div>
+                    <div class="contact-info">📞 +971 527627117</div>
+                    <div class="contact-info">✉️ info@azurehorizon.com</div>
+                    
+                    <div style="margin-top: 16px;">
+                        <p style="color: #d1d5db; font-size: 14px; margin: 8px 0;">
+                            <a href="#" style="color: #14b8a6; text-decoration: none;">Terms & Conditions</a>
+                        </p>
+                        <p style="color: #d1d5db; font-size: 14px; margin: 8px 0;">
+                            <a href="#" style="color: #14b8a6; text-decoration: none;">Cancellation Policy</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="footer-bottom-text">© 2025 Azure Horizon. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
