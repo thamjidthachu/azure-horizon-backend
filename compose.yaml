@@ -23,7 +23,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthz/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f https://resort-apiv1.thamjidthachu.dev//healthz/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
