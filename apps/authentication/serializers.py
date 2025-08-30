@@ -1,11 +1,9 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-from django.core.mail import send_mail
-from django.conf import settings
+from rest_framework import serializers
+from utils import send_email_message
 
 from apps.authentication.models import User
-from .tasks import send_email_message, send_welcome_email_task
 
 
 class UserSerializer(serializers.ModelSerializer):

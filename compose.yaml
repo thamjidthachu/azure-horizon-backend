@@ -8,9 +8,16 @@ services:
   backend:
     <<: *backend-image
     container_name: the_backend
+    command: >
+      sh -c "
+      echo 'Running migrations...' &&
+      python manage.py migrate --noinput &&
+      echo 'Collecting static files...' &&
+      python manage.py collectstatic --noinput --clear &&
+      echo 'Starting Gunicorn...' &&
+      gunicorn resortproject.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
     env_file:
       - .env
-    entrypoint: ["/app/entrypoint.sh"]
     ports:
       - "8000:8000"
     volumes:

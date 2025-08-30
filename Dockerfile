@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     python3-dev \
     python3-psycopg2 \
+    postgresql-client \
     curl \
     gcc \
     && rm -rf /var/lib/apt/lists/*
@@ -22,16 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create non-root user first
-RUN useradd -m appuser
-
-# Create directories and set permissions
-RUN mkdir -p /app/staticfiles /app/media && \
-    chown -R appuser:appuser /app && \
-    chmod -R 755 /app/staticfiles && \
-    chmod -R 755 /app/media && \
-    chmod +x /app/entrypoint.sh
-
+RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Set entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Command to run the application
+CMD ["gunicorn", "resortproject.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
