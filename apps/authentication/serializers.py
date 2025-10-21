@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from utils import send_email_message
+from utils.email import send_email_message
 
 from apps.authentication.models import User
 
@@ -63,8 +63,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         # Send welcome email asynchronously using Celery
         send_email_message.delay(
             subject="Welcome to Azure Horizon | Login Details",
-            template_name="welcome_email.html",
-            context={"user": user, "email": user.email, "password": validated_data['password']},
+            template_name="welcome.html",
+            context={
+                "user_id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "password": validated_data['password']
+            },
             recipient_list=[user.email]
         )
 
