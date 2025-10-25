@@ -1,23 +1,38 @@
 from django import forms
-from .models import Comment
+from .models import Booking, BookingService, Payment
 
 
-class CommentsForm(forms.ModelForm):
-    content_type = forms.CharField(widget=forms.HiddenInput, initial='content_type')
-    object_id = forms.IntegerField(widget=forms.HiddenInput, initial=123)
-
+class BookingAdminForm(forms.ModelForm):
+    """Admin form for Booking model"""
+    
     class Meta:
-        model = Comment
-        fields = ('message',)
-        error_messages = {
-            'message': {
-                'required': "Please Enter your Comment before you post."
-            },
-        }
+        model = Booking
+        fields = '__all__'
         widgets = {
-            'message': forms.TextInput(
-                attrs={'class': 'form', 'placeholder': 'Comment Your Review', 'required': True})
+            'booking_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'booking_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'special_requests': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'admin_notes': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
         }
-        labels = {
-            'message': '',
+
+
+class BookingServiceInlineForm(forms.ModelForm):
+    """Inline form for BookingService"""
+    
+    class Meta:
+        model = BookingService
+        fields = '__all__'
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+        }
+
+
+class PaymentInlineForm(forms.ModelForm):
+    """Inline form for Payment"""
+    
+    class Meta:
+        model = Payment
+        fields = '__all__'
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
         }

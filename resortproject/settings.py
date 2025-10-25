@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.service',
     'apps.contacts',
+    'apps.bookings',
 
 ]
 
@@ -215,3 +216,9 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Stripe Configuration
+STRIPE_API_KEY = config('STRIPE_API_KEY')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+PAYMENT_SUCCESS_URL = config('PAYMENT_SUCCESS_URL', default='http://localhost:3000/payment-success')
+PAYMENT_CANCEL_URL = config('PAYMENT_CANCEL_URL', default='http://localhost:3000/payment-cancel')
