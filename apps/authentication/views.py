@@ -62,29 +62,39 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
+        username_or_email = request.data.get('username')
         password = request.data.get('password')
-        
-        if not username or not password:
+
+        if not username_or_email or not password:
             return Response(
-                {'detail': 'Please provide both username and password'},
+                {'detail': 'Please provide both username/email and password'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        # Determine if input is email or username
+        if '@' in username_or_email:
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+                username = user_obj.username
+            except User.DoesNotExist:
+                return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            username = username_or_email
+
         user = authenticate(request, username=username, password=password)
-        
+
         if user is None:
             return Response(
                 {'detail': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
-        
+
         # Serialize user data
         user_serializer = UserSerializer(user, context={'request': request})
-        
+
         return Response({
             'user': user_serializer.data,
             'refresh': str(refresh),
