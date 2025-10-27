@@ -218,8 +218,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+BASE_FRONTEND_URL = config('NEXT_FRONTEND_BASE_URL', default='http://localhost:3000')
+
 # Stripe Configuration
 STRIPE_API_KEY = config('STRIPE_API_KEY')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
-PAYMENT_SUCCESS_URL = config('PAYMENT_SUCCESS_URL', default='http://localhost:3000/payment-success')
-PAYMENT_CANCEL_URL = config('PAYMENT_CANCEL_URL', default='http://localhost:3000/payment-cancel')
+PAYMENT_SUCCESS_URL = BASE_FRONTEND_URL + config('PAYMENT_SUCCESS_URL', default='/payment-success')
+PAYMENT_CANCEL_URL = BASE_FRONTEND_URL + config('PAYMENT_CANCEL_URL', default='/payment-cancel')
