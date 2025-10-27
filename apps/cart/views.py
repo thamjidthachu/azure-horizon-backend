@@ -197,7 +197,7 @@ def checkout_cart(request):
             total_amount=cart.total_amount,
             checkout_date=timezone.now()
         )
-        
+
         # Create order items from cart items
         cart_items = cart.cart_items.filter(is_active=True)
         for cart_item in cart_items:
@@ -211,11 +211,99 @@ def checkout_cart(request):
                 booking_time=cart_item.booking_time,
                 special_requests=cart_item.special_requests
             )
-        
-        # Don't close cart yet - wait for successful payment
-        order_serializer = OrderDetailSerializer(order)
-        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-    
+
+        # --- Create or reuse Booking and Payment records ---
+        from apps.bookings.models import Booking, BookingService, Payment
+        # Try to find an existing booking for this user/cart/session that is not paid/cancelled
+        booking = Booking.objects.filter(
+            user=request.user,
+            guest_email=serializer.validated_data['customer_email'],
+            status__in=['pending', 'confirmed', 'in_progress'],
+            payment_status__in=['unpaid', 'partial']
+        ).order_by('-created_at').first()
+
+        if booking:
+            # Update booking details
+            booking.guest_name = serializer.validated_data['customer_name']
+            booking.guest_phone = serializer.validated_data['customer_phone']
+            booking.booking_date = cart_items.first().booking_date if cart_items.exists() else timezone.now().date()
+            booking.booking_time = cart_items.first().booking_time if cart_items.exists() else None
+            booking.number_of_guests = cart.get_items_count()
+            booking.subtotal = cart.subtotal
+            booking.tax = cart.tax
+            booking.total_amount = cart.total_amount
+            booking.special_requests = serializer.validated_data.get('special_instructions', '')
+            booking.save()
+            # Remove old BookingService records and recreate from cart
+            booking.booking_services.all().delete()
+        else:
+            booking = Booking(
+                user=request.user,
+                guest_name=serializer.validated_data['customer_name'],
+                guest_email=serializer.validated_data['customer_email'],
+                guest_phone=serializer.validated_data['customer_phone'],
+                booking_date=cart_items.first().booking_date if cart_items.exists() else timezone.now().date(),
+                booking_time=cart_items.first().booking_time if cart_items.exists() else None,
+                number_of_guests=cart.get_items_count(),
+                status='pending',
+                payment_status='unpaid',
+                subtotal=cart.subtotal,
+                tax=cart.tax,
+                total_amount=cart.total_amount,
+                special_requests=serializer.validated_data.get('special_instructions', '')
+            )
+            booking.save()
+
+        for cart_item in cart_items:
+            BookingService.objects.create(
+                booking=booking,
+                service=cart_item.service,
+                quantity=cart_item.quantity,
+                unit_price=cart_item.unit_price,
+                total_price=cart_item.total_price,
+                notes=cart_item.special_requests
+            )
+
+        # Now update totals after all BookingService records are created
+        booking.calculate_totals()
+        booking.save()
+
+        # Try to find an existing pending payment for this booking
+        payment = Payment.objects.filter(
+            booking=booking,
+            payment_status='pending',
+            payment_method='online'
+        ).order_by('-payment_date').first()
+        if payment:
+            payment.amount = cart.total_amount
+            payment.notes = 'Stripe payment initiated from cart checkout.'
+            payment.save()
+        else:
+            payment = Payment.objects.create(
+                booking=booking,
+                amount=cart.total_amount,
+                payment_method='online',
+                payment_status='pending',
+                notes='Stripe payment initiated from cart checkout.'
+            )
+
+        # --- Initiate Stripe checkout ---
+        from apps.bookings.stripe_utils import create_checkout_session
+        stripe_result = create_checkout_session(booking)
+        if stripe_result['success']:
+            # Save the Stripe session_id to the Payment record (dedicated field)
+            payment.session_id = stripe_result['session_id']
+            payment.save(update_fields=['session_id'])
+            return Response({
+                'order': OrderDetailSerializer(order).data,
+                'booking_number': booking.booking_number,
+                'payment_id': payment.id,
+                'stripe_checkout_url': stripe_result['checkout_url'],
+                'stripe_session_id': stripe_result['session_id'],
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'error': 'Failed to create Stripe checkout session', 'details': stripe_result.get('error')}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

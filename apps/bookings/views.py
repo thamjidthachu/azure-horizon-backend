@@ -244,27 +244,60 @@ class CreateCheckoutSessionView(APIView):
 class VerifyPaymentView(APIView):
     """Verify payment status from Stripe"""
     permission_classes = [AllowAny]
-    
-    def get(self, request):
-        session_id = request.query_params.get('session_id')
-        booking_number = request.query_params.get('booking_number')
-        
+
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        booking_number = request.data.get('booking_number')
+
         if not session_id:
             return Response({
                 "error": "session_id is required"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Retrieve session from Stripe
         session = retrieve_checkout_session(session_id)
-        
+
         if not session:
             return Response({
                 "error": "Invalid session"
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Get booking
         booking = get_object_or_404(Booking, booking_number=booking_number)
-        
+        booking.status = 'completed'
+        booking.save()
+
+        return Response({
+            "payment_status": session.payment_status,
+            "booking_status": booking.status,
+            "booking_payment_status": booking.payment_status,
+            "amount_total": session.amount_total / 100,  # Convert from cents
+            "customer_email": session.customer_email,
+        }, status=status.HTTP_200_OK)
+    
+    
+    def get(self, request):
+        session_id = request.query_params.get('session_id')
+        booking_number = request.query_params.get('booking_number')
+
+        if not session_id:
+            return Response({
+                "error": "session_id is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Retrieve session from Stripe
+        session = retrieve_checkout_session(session_id)
+
+        if not session:
+            return Response({
+                "error": "Invalid session"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Get booking
+        booking = get_object_or_404(Booking, booking_number=booking_number)
+        booking.status = 'completed'
+        booking.save()
+
         return Response({
             "payment_status": session.payment_status,
             "booking_status": booking.status,

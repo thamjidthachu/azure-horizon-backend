@@ -126,7 +126,7 @@ class PaymentAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Payment Information', {
-            'fields': ('booking', 'amount', 'payment_method', 'payment_status')
+            'fields': ('booking', 'amount', 'session_id', 'payment_method', 'payment_status')
         }),
         ('Transaction Details', {
             'fields': ('transaction_id', 'payment_date', 'notes')

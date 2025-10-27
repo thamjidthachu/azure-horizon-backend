@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Configure Stripe
-stripe.api_key = settings.STRIPE_API_KEY
+stripe.api_key = settings.STRIPE_SECRET
 
 
 def create_checkout_session(booking):
@@ -238,7 +238,7 @@ def verify_webhook_signature(payload, signature):
     """
     try:
         event = stripe.Webhook.construct_event(
-            payload, signature, settings.STRIPE_WEBHOOK_SECRET
+            payload, signature, settings.STRIPE_SECRET
         )
         return event
     except ValueError:

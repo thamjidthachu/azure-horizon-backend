@@ -70,10 +70,12 @@ class Booking(TimeStampedModel, ActiveModel):
             timestamp = datetime.now().strftime('%Y%m%d')
             unique_id = str(uuid.uuid4())[:8].upper()
             self.booking_number = f"BK-{timestamp}-{unique_id}"
-        
-        # Calculate totals
-        self.calculate_totals()
+        is_new = self.pk is None
         super().save(*args, **kwargs)
+        # Only calculate totals after the object has a PK (i.e., after first save)
+        if not is_new:
+            self.calculate_totals()
+            super().save(update_fields=['subtotal', 'tax', 'total_amount'])
     
     def calculate_totals(self):
         """Calculate subtotal, tax, and total from booking services"""
@@ -141,6 +143,7 @@ class Payment(TimeStampedModel):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    session_id = models.CharField(max_length=200, null=True, blank=True, help_text="Stripe session ID for payment tracking")
     payment_date = models.DateTimeField(auto_now_add=True)
     
     notes = models.TextField(null=True, blank=True)
