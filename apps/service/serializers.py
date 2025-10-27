@@ -17,7 +17,7 @@ class ServiceListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count',]
+        fields = ['id', 'slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count',]
 
     @staticmethod
     def get_rating(obj):

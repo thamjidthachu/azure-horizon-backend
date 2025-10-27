@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.service',
     'apps.contacts',
     'apps.bookings',
+    'apps.cart',
 
 ]
 

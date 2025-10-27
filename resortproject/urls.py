@@ -27,5 +27,6 @@ urlpatterns = [
     path('services/', include('apps.service.urls'), name='services'),
     path('contacts/', include('apps.contacts.urls'), name='contacts'),
     path('bookings/', include('apps.bookings.urls'), name='bookings'),
+    path('api/cart/', include('apps.cart.urls'), name='cart'),
     path('healthz/', HealthCheckView.as_view(), name='healthz'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
