@@ -17,14 +17,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic.base import TemplateView
 
 from apps.authentication.views import HealthCheckView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('authentication/', include("django.contrib.auth.urls")),  # Django's built-in auth
-    path('api/auth/', include('apps.authentication.urls')),  # API authentication endpoints
-    path('services/', include('apps.service.urls')),
-    path('healthz', HealthCheckView.as_view(), name='healthz'),
+    path('authentication/', include("django.contrib.auth.urls"), name='authentication'),  # Django's built-in auth
+    path('api/auth/', include('apps.authentication.urls'), name='api-auth'),
+    path('services/', include('apps.service.urls'), name='services'),
+    path('contacts/', include('apps.contacts.urls'), name='contacts'),
+    path('bookings/', include('apps.bookings.urls'), name='bookings'),
+    path('api/cart/', include('apps.cart.urls'), name='cart'),
+    path('healthz/', HealthCheckView.as_view(), name='healthz'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

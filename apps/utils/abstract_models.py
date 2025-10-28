@@ -10,9 +10,9 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 class ActiveModel(models.Model):
+    id = models.BigAutoField(primary_key=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
-    delete_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -20,11 +20,9 @@ class ActiveModel(models.Model):
     def activate(self):
         self.is_active = True
         self.is_deleted = False
-        self.delete_at = None
         self.save()
 
     def deactivate(self):
         self.is_active = False
         self.is_deleted = True
-        self.delete_at = now()
         self.save()

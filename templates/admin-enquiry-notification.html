@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Enquiry Alert - Azure Horizon Resort</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc;">
+        <tr>
+            <td>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; max-width: 600px;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold; line-height: 1.2;">
+                                🚨 New Enquiry Alert
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #fef2f2; font-size: 14px;">
+                                Azure Horizon Resort - Admin Notification
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Priority Banner -->
+                    <tr>
+                        <td style="background-color: #fef3c7; padding: 15px 30px; text-align: center; border-left: 4px solid #f59e0b;">
+                            <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: bold;">
+                                ⏰ Response Required Within 2 Hours
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: bold;">
+                                New Customer Enquiry Received
+                            </h2>
+                            
+                            <p style="margin: 0 0 25px 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                                A new enquiry has been submitted through the Azure Horizon Resort website. Please review the details below and respond to the customer within 2 hours.
+                            </p>
+                            
+                            <!-- Customer Information -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f3f4f6; border-radius: 8px; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #374151; font-size: 16px; font-weight: bold;">
+                                            👤 Customer Information
+                                        </h3>
+                                        
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-weight: bold; width: 25%;">
+                                                    Name:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #111827; font-size: 13px;">
+                                                    {{first_name}} {{last_name}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-weight: bold;">
+                                                    Email:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #111827; font-size: 13px;">
+                                                    <a href="mailto:{{email}}" style="color: #2563eb; text-decoration: none;">{{email}}</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-weight: bold;">
+                                                    Phone:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #111827; font-size: 13px;">
+                                                    <a href="tel:{{phone}}" style="color: #2563eb; text-decoration: none;">{{phone}}</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-weight: bold;">
+                                                    Subject:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #111827; font-size: 13px;">
+                                                    <span style="background-color: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                                                        {{subject}}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 13px; font-weight: bold;">
+                                                    Submitted:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #111827; font-size: 13px;">
+                                                    {{ created_at }}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Booking Details (if provided) -->
+                             {% if preferred_dates or number_of_guests %}
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #eff6ff; border-radius: 8px; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #1e40af; font-size: 16px; font-weight: bold;">
+                                            📅 Booking Preferences
+                                        </h3>
+                                        
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            {% if preferred_dates %}
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #3730a3; font-size: 13px; font-weight: bold; width: 25%;">
+                                                    Preferred Dates:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #1e1b4b; font-size: 13px;">
+                                                    {{ preferred_dates }}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            {% if number_of_guests %}
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #3730a3; font-size: 13px; font-weight: bold;">
+                                                    Number of Guests:
+                                                </td>
+                                                <td style="padding: 6px 0; color: #1e1b4b; font-size: 13px;">
+                                                    {{ number_of_guests }}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                            
+                            <!-- Customer Message -->
+                            <div style="background-color: #fef9e7; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                                <h3 style="margin: 0 0 10px 0; color: #92400e; font-size: 16px; font-weight: bold;">
+                                    💬 Customer Message
+                                </h3>
+                                <div style="background-color: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #fed7aa;">
+                                    <p style="margin: 0; color: #451a03; font-size: 14px; line-height: 1.5; font-style: italic;">
+                                        "{{message}}"
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Required -->
+                            <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+                                <h3 style="margin: 0 0 15px 0; color: #b91c1c; font-size: 18px; font-weight: bold;">
+                                    ⚡ Action Required
+                                </h3>
+                                <ul style="margin: 0; padding: 0; list-style: none; color: #7f1d1d; font-size: 14px; line-height: 1.6;">
+                                    <li style="margin-bottom: 8px;">✅ Acknowledge receipt of enquiry</li>
+                                    <li style="margin-bottom: 8px;">📋 Review customer requirements and preferences</li>
+                                    <li style="margin-bottom: 8px;">💰 Prepare personalized proposal with pricing</li>
+                                    <li style="margin-bottom: 0;">📧 Respond to customer within 2 hours</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 25px 0;">
+                                <tr>
+                                    <td style="width: 50%; padding-right: 10px; text-align: center;">
+                                        <a href="mailto:{{email}}?subject=Re: {{subject}}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: bold;">
+                                            📧 Reply to Customer
+                                        </a>
+                                    </td>
+                                    <td style="width: 50%; padding-left: 10px; text-align: center;">
+                                        <a href="tel:{{phone}}" style="display: inline-block; background-color: #0d9488; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: bold;">
+                                            📞 Call Customer
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 25px 0 0 0; color: #6b7280; font-size: 12px; text-align: center; line-height: 1.4;">
+                                This is an automated notification from the Azure Horizon Resort contact form.<br>
+                                Please ensure timely response to maintain our service standards.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #374151; padding: 20px; text-align: center;">
+                            <h4 style="margin: 0 0 5px 0; color: #ffffff; font-size: 16px; font-weight: bold;">
+                                Azure Horizon Resort - Admin Panel
+                            </h4>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                Al Reem Island, Abu Dhabi, UAE | info@azurehorizon.com
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,6 +1,7 @@
 from rest_framework import serializers
+
+from apps.authentication.serializers import UserSerializer
 from .models import File, Service, Comment, Advertisement
-from ..authentication.serializers import UserSerializer
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -16,7 +17,7 @@ class ServiceListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count',]
+        fields = ['id', 'slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count',]
 
     @staticmethod
     def get_rating(obj):

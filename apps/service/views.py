@@ -2,12 +2,11 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import status, generics, permissions
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.pagination import PageNumberPagination
 
 from resortproject import settings
 from .models import Service, Comment, Advertisement

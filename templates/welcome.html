@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Azure Horizon</title>
+    <style>
+        /* Internal CSS for better email client support */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8fafc;
+            color: #0f172a;
+            line-height: 1.6;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+        
+        .tagline {
+            color: #ffffff;
+            font-size: 16px;
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 24px;
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+        
+        .welcome-message {
+            font-size: 16px;
+            color: #475569;
+            margin: 0 0 24px 0;
+            text-align: center;
+        }
+
+        /* Credentials Section */
+        .credentials-section {
+            background: linear-gradient(135deg, #f0fdfa, #f0f9ff);
+            border: 2px solid #14b8a6;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .credentials-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .credentials-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0 0 20px 0;
+        }
+
+        .credential-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .credential-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .credential-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .security-note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0 0 0;
+            font-size: 14px;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .features-section {
+            margin: 32px 0;
+        }
+        
+        .features-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+        
+        .features-grid {
+            display: table;
+            width: 100%;
+            margin: 16px 0;
+        }
+        
+        .feature-item {
+            display: table-cell;
+            width: 50%;
+            padding: 16px 8px;
+            vertical-align: top;
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            border-radius: 50%;
+            margin: 0 auto 12px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            text-align: center;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .cta-section {
+            background-color: #f8fafc;
+            padding: 32px 24px;
+            text-align: center;
+            margin: 32px 0;
+            border-radius: 8px;
+        }
+        
+        .cta-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+        }
+        
+        .cta-button {
+            background: #0d9488 !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+            padding: 14px 32px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 16px !important;
+            border: none !important;
+            display: inline-block !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+            line-height: 1.2 !important;
+            font-family: ui-sans-serif, system-ui, sans-serif !important;
+            /* Remove problematic properties for email clients */
+            /* transition: all 0.3s ease; */
+            /* box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); */
+        }
+        
+        .cta-button:hover {
+            background: #0f766e !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+        }
+
+        /* Button table for better email client support */
+        .button-table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        
+        .button-cell {
+            background: #0d9488;
+            border-radius: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .footer {
+            background-color: #1f2937;
+            color: #ffffff;
+            padding: 32px 24px;
+        }
+        
+        .footer-content {
+            display: table;
+            width: 100%;
+        }
+        
+        .footer-section {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding: 0 16px;
+        }
+        
+        .footer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #14b8a6;
+            margin: 0 0 16px 0;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #d1d5db;
+            margin: 0 0 16px 0;
+            line-height: 1.5;
+        }
+        
+        .contact-info {
+            font-size: 14px;
+            color: #d1d5db;
+            margin: 8px 0;
+        }
+        
+        .social-links {
+            margin: 16px 0;
+        }
+        
+        .social-link {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background-color: #374151;
+            border-radius: 50%;
+            margin: 0 8px 0 0;
+            text-decoration: none;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            margin-top: 24px;
+            padding-top: 24px;
+            text-align: center;
+        }
+        
+        .footer-bottom-text {
+            font-size: 14px;
+            color: #9ca3af;
+            margin: 0;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .features-grid {
+                display: block;
+            }
+            
+            .feature-item {
+                display: block;
+                width: 100%;
+                padding: 16px 0;
+            }
+            
+            .footer-content {
+                display: block;
+            }
+            
+            .footer-section {
+                display: block;
+                width: 100%;
+                padding: 0;
+                margin-bottom: 24px;
+            }
+            
+            .header {
+                padding: 24px 16px;
+            }
+            
+            .content {
+                padding: 32px 16px;
+            }
+            
+            .cta-section {
+                padding: 24px 16px;
+                margin: 24px 0;
+            }
+            
+            .footer {
+                padding: 24px 16px;
+            }
+
+            .credential-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .credential-value {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <a href="{{ base_url }}" class="logo">Azure Horizon</a>
+            <p class="tagline">Beyond rest, into peace.</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h2 class="welcome-title">Welcome to Azure Horizon! 🌊</h2>
+            
+            <p class="welcome-message">
+                Hello <strong>{{ username }}</strong>! Thank you for joining our exclusive resort community. We're thrilled to have you aboard and can't wait to help you create unforgettable memories.
+            </p>
+
+            <!-- Login Credentials Section with table-based layout -->
+            <div style="background: linear-gradient(135deg, #f0fdfa, #f0f9ff); border: 2px solid #14b8a6; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center;">
+                <h3 style="font-size: 20px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0; text-align: center;">
+                    🔐 Your Account Credentials
+                </h3>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 20px 0;">
+                    Please save these login details for accessing your account
+                </p>
+                
+                <!-- Email Credential -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 12px 0;">
+                    <tr>
+                        <td style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                                <tr>
+                                    <td style="text-align: left; vertical-align: middle; width: 40%;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #475569;">
+                                            📧 Email Address:
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right; vertical-align: middle; width: 60%;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: 'Courier New', monospace;">{{ email }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Username Credential -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 12px 0;">
+                    <tr>
+                        <td style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                                <tr>
+                                    <td style="text-align: left; vertical-align: middle; width: 40%;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #475569;">
+                                            👤 Username:
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right; vertical-align: middle; width: 60%;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: 'Courier New', monospace;">{{ username }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Password Credential -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 12px 0;">
+                    <tr>
+                        <td style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                                <tr>
+                                    <td style="text-align: left; vertical-align: middle; width: 40%;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #475569;">
+                                            🔑 Password:
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right; vertical-align: middle; width: 60%;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: 'Courier New', monospace;">{{ password }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Security Note -->
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 20px 0 0 0; font-size: 14px; color: #92400e; text-align: left;">
+                    <p style="margin: 0; padding: 0;">
+                        <span style="font-size: 16px;">⚠️</span>
+                        <strong>Important:</strong> Please keep your credentials safe and secure. We recommend changing your password after your first login for enhanced security.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Features Section -->
+            <div class="features-section">
+                <h3 class="features-title">What Awaits You</h3>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">🏖️</span>
+                        </div>
+                        <h4 class="feature-title">Luxury Services</h4>
+                        <p class="feature-desc">Premium spa treatments, fine dining, and world-class amenities</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">🌴</span>
+                        </div>
+                        <h4 class="feature-title">Peaceful Retreats</h4>
+                        <p class="feature-desc">Serene environments surrounded by nature's beauty</p>
+                    </div>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">⭐</span>
+                        </div>
+                        <h4 class="feature-title">Exclusive Access</h4>
+                        <p class="feature-desc">Member-only events and personalized experiences</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <span style="color: white; font-size: 20px;">📱</span>
+                        </div>
+                        <h4 class="feature-title">Easy Booking</h4>
+                        <p class="feature-desc">Seamless reservation system for all our services</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h3 class="cta-title">Ready to Begin Your Journey?</h3>
+                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 16px;">
+                    Use your credentials above to access your account and start exploring our exclusive services and amenities.
+                </p>
+                
+                <!-- Single email-friendly button with Outlook support -->
+                <div style="text-align: center; margin: 24px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ base_url }}/login" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="16%" strokecolor="#0d9488" fillcolor="#0d9488">
+                    <w:anchorlock/>
+                    <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">🔐 Login to Your Account</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                        <tr>
+                            <td style="border-radius: 8px; background: #0d9488; text-align: center;">
+                                <a href="{{ base_url }}/login" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   style="background-color: #0d9488 !important;
+                                          border: 1px solid #0d9488 !important;
+                                          border-radius: 8px !important;
+                                          color: #ffffff !important;
+                                          display: inline-block !important;
+                                          font-family: Arial, sans-serif !important;
+                                          font-size: 16px !important;
+                                          font-weight: bold !important;
+                                          line-height: 50px !important;
+                                          text-align: center !important;
+                                          text-decoration: none !important;
+                                          width: 250px !important;
+                                          height: 50px !important;
+                                          -webkit-text-size-adjust: none;">
+                                    🔐 Login to Your Account
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                    <!--<![endif]-->
+                </div>
+            </div>
+            
+            <p style="color: #64748b; font-size: 14px; text-align: center; margin: 24px 0 0 0;">
+                If you have any questions, our concierge team is available 24/7 to assist you.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <a class="logo" href="{{ base_url }}"><h4 class="footer-title">Azure Horizon</h4> </a>
+                    <p class="footer-text">
+                        From peaceful retreats surrounded by nature to indulgent luxury experiences, every moment is designed to refresh your soul.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" style="background-color: #3b82f6;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">f</span>
+                        </a>
+                        <a href="#" class="social-link" style="background-color: #1da1f2;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">t</span>
+                        </a>
+                        <a href="#" class="social-link" style="background-color: #e1306c;">
+                            <span style="color: white; font-size: 12px; line-height: 32px; display: block; text-align: center;">i</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">Contact Info</h4>
+                    <div class="contact-info">📍 Al Reem Island, Abu Dhabi, UAE</div>
+                    <div class="contact-info">📞 +971 527627117</div>
+                    <div class="contact-info">✉️ info@azurehorizon.com</div>
+                    
+                    <div style="margin-top: 16px;">
+                        <p style="color: #d1d5db; font-size: 14px; margin: 8px 0;">
+                            <a href="{{ base_url }}/terms" style="color: #14b8a6; text-decoration: none;">Terms & Conditions</a>
+                        </p>
+                        <p style="color: #d1d5db; font-size: 14px; margin: 8px 0;">
+                            <a href="{{ base_url }}/cancellation" style="color: #14b8a6; text-decoration: none;">Cancellation Policy</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="footer-bottom-text">© {{ current_year }} Azure Horizon. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,8 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-from django.core.mail import send_mail
-from django.conf import settings
+from rest_framework import serializers
+from utils.email import send_email_message
+from django.db.models import Q
 
 from apps.authentication.models import User
 
@@ -61,29 +61,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         
-        # Send welcome email
-        self.send_welcome_email(user, validated_data['password'])
-        
+        # Send welcome email asynchronously using Celery
+        send_email_message.delay(
+            subject="Welcome to Azure Horizon | Login Details",
+            template_name="welcome.html",
+            context={
+                "user_id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "password": validated_data['password']
+            },
+            recipient_list=[user.email]
+        )
+
         return user
-
-    @staticmethod
-    def send_welcome_email(user, password):
-        subject = 'Welcome to Our Resort'
-        message = f"""
-        Thank you for registering with us!
-        
-        Here are your login details:
-        Username: {user.username}
-        Email: {user.email}
-        Password: {password}
-        
-        Please keep your credentials safe and do not share them with anyone.
-        
-        Best regards,
-        The Resort Team
-        """
-
-        send_mail(subject=subject, message=message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[user.email])
 
 
 class LoginSerializer(serializers.Serializer):
@@ -111,4 +103,28 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authorization')
 
         attrs['user'] = user
+        return attrs
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField()
+
+    def validate_username(self, value):
+        if not User.objects.filter(Q(email=value) | Q(username=value)).exists():
+            raise serializers.ValidationError("No user is associated with this username.")
+        return value
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        token = attrs.get('token')
+        if not User.objects.filter(
+                (Q(email=username) | Q(username=username)) & Q(reset_token=token)
+                ).exists():
+            raise serializers.ValidationError("Invalid token or email/username.")
         return attrs

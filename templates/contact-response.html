@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Your Enquiry - Azure Horizon Resort</title>
+    <style>
+        /* Fallback styles for email clients that support CSS */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc;">
+        <tr>
+            <td>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; max-width: 600px;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold; line-height: 1.2;">
+                                🏝️ Azure Horizon Resort
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #e0f7fa; font-size: 16px;">
+                                Your Paradise Awaits
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px; font-weight: bold;">
+                                Thank You for Your Enquiry!
+                            </h2>
+                            
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Dear <strong>{{first_name}} {{last_name}}</strong>,
+                            </p>
+                            
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Thank you for reaching out to Azure Horizon Resort! We're thrilled that you're considering us for your next getaway. Your enquiry has been received and our dedicated concierge team is already working on creating the perfect experience for you.
+                            </p>
+                            
+                            <!-- Enquiry Details -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc; border-radius: 8px; margin: 30px 0;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #0d9488; font-size: 18px; font-weight: bold;">
+                                            📋 Your Enquiry Details
+                                        </h3>
+                                        
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: bold; width: 35%;">
+                                                    Subject:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">
+                                                    {{subject}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: bold;">
+                                                    Email:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">
+                                                    {{email}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: bold;">
+                                                    Phone:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">
+                                                    {{phone}}
+                                                </td>
+                                            </tr>
+                                            {% if preferred_dates %}
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: bold;">
+                                                    Preferred Dates:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">
+                                                    {{preferred_dates}}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            {% if number_of_guests %}
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: bold;">
+                                                    Number of Guests:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">
+                                                    {{number_of_guests}}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                        
+                                        <div style="margin-top: 20px;">
+                                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; font-weight: bold;">
+                                                Your Message:
+                                            </p>
+                                            <div style="background-color: #ffffff; padding: 15px; border-radius: 6px; border-left: 4px solid #0d9488;">
+                                                <p style="margin: 0; color: #1f2937; font-size: 14px; line-height: 1.5; font-style: italic;">
+                                                    "{{message}}"
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Next Steps -->
+                            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border-radius: 8px; padding: 25px; margin: 30px 0;">
+                                <h3 style="margin: 0 0 15px 0; color: #059669; font-size: 18px; font-weight: bold;">
+                                    🎯 What Happens Next?
+                                </h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #047857; font-size: 14px; line-height: 1.6;">
+                                    <li style="margin-bottom: 8px;">Our concierge team will review your requirements within 2 hours</li>
+                                    <li style="margin-bottom: 8px;">We'll prepare a personalized proposal based on your preferences</li>
+                                    <li style="margin-bottom: 8px;">You'll receive a detailed response with recommendations and pricing</li>
+                                    <li style="margin-bottom: 0;">We'll be available for any questions or modifications you need</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Contact Information -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
+                                <tr>
+                                    <td style="width: 50%; padding-right: 15px;">
+                                        <div style="background-color: #fef7ff; border-radius: 8px; padding: 20px; text-align: center;">
+                                            <div style="font-size: 24px; margin-bottom: 10px;">📞</div>
+                                            <h4 style="margin: 0 0 5px 0; color: #7c2d12; font-size: 16px; font-weight: bold;">Call Us</h4>
+                                            <p style="margin: 0; color: #a16207; font-size: 14px;">+971 527627117</p>
+                                            <p style="margin: 5px 0 0 0; color: #92400e; font-size: 12px;">24/7 Concierge</p>
+                                        </div>
+                                    </td>
+                                    <td style="width: 50%; padding-left: 15px;">
+                                        <div style="background-color: #f0f9ff; border-radius: 8px; padding: 20px; text-align: center;">
+                                            <div style="font-size: 24px; margin-bottom: 10px;">✉️</div>
+                                            <h4 style="margin: 0 0 5px 0; color: #1e40af; font-size: 16px; font-weight: bold;">Email Us</h4>
+                                            <p style="margin: 0; color: #2563eb; font-size: 14px;">info@azurehorizon.com</p>
+                                            <p style="margin: 5px 0 0 0; color: #3b82f6; font-size: 12px;">Quick Response</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 30px 0 0 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                We can't wait to help you create unforgettable memories at Azure Horizon Resort!
+                            </p>
+                            
+                            <p style="margin: 20px 0 0 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Warm regards,<br>
+                                <strong style="color: #0d9488;">The Azure Horizon Resort Team</strong>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1f2937; padding: 30px; text-align: center;">
+                            <div style="margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 10px 0; color: #ffffff; font-size: 20px; font-weight: bold;">
+                                    🏝️ Azure Horizon Resort
+                                </h3>
+                                <p style="margin: 0; color: #9ca3af; font-size: 14px;">
+                                    Al Reem Island, Abu Dhabi, UAE
+                                </p>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #374151; padding-top: 20px;">
+                                <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 12px;">
+                                    This email was sent in response to your enquiry at Azure Horizon Resort.
+                                </p>
+                                <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                                    © 2025 Azure Horizon Resort. All rights reserved.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -9,6 +9,11 @@ _pycache_/
 
 # Distribution / packaging
 .Python
+*/__pycache__/*
+__pycache__/
+
+# Distribution / packaging
+.Python
 build/
 develop-eggs/
 dist/

@@ -25,7 +25,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Application definition
 
@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     # apps
     'apps.authentication',
     'apps.service',
+    'apps.contacts',
+    'apps.bookings',
+    'apps.cart',
 
 ]
 
@@ -69,7 +72,7 @@ ROOT_URLCONF = 'resortproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates', ],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -90,8 +93,8 @@ WSGI_APPLICATION = 'resortproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
+        'NAME': config('DB_NAME'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT'),
@@ -152,14 +155,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # email
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = config('EMAIL')
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
+DEFAULT_FROM_EMAIL = config('DEFAULT_EMAIL')  # Fixed this line
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL')
-EMAIL_DEFAULT_USER = config('DEFAULT_EMAIL')
-EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
 
 
 # Default primary key field type
@@ -168,6 +170,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'authentication.User'
 
+NEXT_FRONTEND_BASE_URL = config('NEXT_FRONTEND_BASE_URL', default='http://localhost:3000')
 
 
 # Session settings
@@ -194,15 +197,11 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-]
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS').split(',')
 # CSRF settings
 CSRF_COOKIE_SECURE = False
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
@@ -210,3 +209,19 @@ CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://redis:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+BASE_FRONTEND_URL = config('NEXT_FRONTEND_BASE_URL', default='http://localhost:3000')
+
+# Stripe Configuration
+STRIPE_API_KEY = config('STRIPE_API_KEY')
+STRIPE_SECRET = config('STRIPE_SECRET')
+PAYMENT_SUCCESS_URL = BASE_FRONTEND_URL + config('PAYMENT_SUCCESS_URL', default='/payment-success')
+PAYMENT_CANCEL_URL = BASE_FRONTEND_URL + config('PAYMENT_CANCEL_URL', default='/payment-cancel')
