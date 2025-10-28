@@ -3,6 +3,7 @@ from django.db import models
 from decimal import Decimal
 
 from apps.authentication.models import User
+from apps.cart.models import OrderDetail
 from apps.service.models import Service
 from apps.utils import ActiveModel, TimeStampedModel
 
@@ -27,10 +28,7 @@ class Booking(TimeStampedModel, ActiveModel):
     
     # Customer Information
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
-    guest_name = models.CharField(max_length=200, help_text="Full name of the guest")
-    guest_email = models.EmailField(help_text="Contact email")
-    guest_phone = models.CharField(max_length=20, help_text="Contact phone number")
-    
+    order = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True, blank=True) 
     # Booking Details
     booking_number = models.CharField(max_length=50, unique=True, editable=False)
     booking_date = models.DateField(help_text="Date of the booking/reservation")
@@ -60,7 +58,7 @@ class Booking(TimeStampedModel, ActiveModel):
         ]
     
     def __str__(self):
-        return f"Booking #{self.booking_number} - {self.guest_name}"
+        return f"Booking #{self.booking_number} - {self.user.full_name}"
     
     def save(self, *args, **kwargs):
         if not self.booking_number:
@@ -72,50 +70,16 @@ class Booking(TimeStampedModel, ActiveModel):
             self.booking_number = f"BK-{timestamp}-{unique_id}"
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        # Only calculate totals after the object has a PK (i.e., after first save)
         if not is_new:
             self.calculate_totals()
             super().save(update_fields=['subtotal', 'tax', 'total_amount'])
     
     def calculate_totals(self):
         """Calculate subtotal, tax, and total from booking services"""
-        booking_services = self.booking_services.all()
-        self.subtotal = sum(bs.total_price for bs in booking_services)
+        items = self.order.order_items.all()
+        self.subtotal = sum(item.total_price for item in items)
         self.tax = self.subtotal * Decimal('0.05')  # 5% tax
         self.total_amount = self.subtotal + self.tax
-
-
-class BookingService(TimeStampedModel):
-    """Services included in a booking"""
-    
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='booking_services')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    
-    quantity = models.PositiveIntegerField(default=1, help_text="Number of people/units")
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    notes = models.TextField(null=True, blank=True)
-    
-    class Meta:
-        ordering = ['id']
-    
-    def __str__(self):
-        return f"{self.service.name} - {self.quantity} x ${self.unit_price}"
-    
-    def save(self, *args, **kwargs):
-        # Set unit price from service if not provided
-        if not self.unit_price:
-            self.unit_price = self.service.price
-        
-        # Calculate total price
-        self.total_price = self.unit_price * self.quantity
-        super().save(*args, **kwargs)
-        
-        # Update booking totals
-        if self.booking_id:
-            self.booking.calculate_totals()
-            self.booking.save()
 
 
 class Payment(TimeStampedModel):

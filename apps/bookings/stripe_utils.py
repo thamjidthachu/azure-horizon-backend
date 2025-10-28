@@ -26,29 +26,29 @@ def create_checkout_session(booking):
         # Prepare line items from booking services
         line_items = []
         
-        for booking_service in booking.booking_services.all():
+        for item in booking.order.order_items.all():
             line_items.append({
                 'price_data': {
-                    'currency': 'usd',
-                    'unit_amount': int(booking_service.unit_price * 100),  # Convert to cents
+                    'currency': 'aed',
+                    'unit_amount': int(item.unit_price * 100),  # Convert to cents
                     'product_data': {
-                        'name': booking_service.service.name,
-                        'description': f"{booking_service.service.synopsis or 'Resort service'}",
-                        'images': [],  # Add service images if available
+                        'name': item.service.name,
+                        'description': f"{item.service.synopsis or 'Resort service'}",
+                        'images': [],
                     },
                 },
-                'quantity': booking_service.quantity,
+                'quantity': item.quantity,
             })
         
         # Add tax as a separate line item if applicable
         if booking.tax > 0:
             line_items.append({
                 'price_data': {
-                    'currency': 'usd',
+                    'currency': 'aed',
                     'unit_amount': int(booking.tax * 100),
                     'product_data': {
-                        'name': 'Tax',
-                        'description': 'Service tax',
+                        'name': 'VAT (5%)',
+                        'description': 'Value Added Tax (VAT)',
                     },
                 },
                 'quantity': 1,
@@ -59,12 +59,12 @@ def create_checkout_session(booking):
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            customer_email=booking.guest_email,
+            customer_email=booking.order.customer_email,
             client_reference_id=booking.booking_number,
             metadata={
                 'booking_number': booking.booking_number,
                 'booking_id': str(booking.id),
-                'guest_name': booking.guest_name,
+                'guest_name': booking.order.customer_name,
             },
             success_url=f"{settings.PAYMENT_SUCCESS_URL}?session_id={{CHECKOUT_SESSION_ID}}&booking_number={booking.booking_number}",
             cancel_url=f"{settings.PAYMENT_CANCEL_URL}?booking_number={booking.booking_number}",
@@ -170,7 +170,7 @@ def handle_checkout_session_completed(session):
             template_name="payment-confirmation.html",
             context={
                 "booking_number": booking.booking_number,
-                "guest_name": booking.guest_name,
+                "guest_name": booking.order.customer_name,
                 "amount": str(payment.amount),
                 "transaction_id": payment_intent_id,
                 "payment_method": "Credit/Debit Card",

@@ -68,8 +68,6 @@ class BookingDetailView(generics.RetrieveAPIView):
     lookup_field = 'booking_number'
     
     def get_queryset(self):
-        # If user is authenticated, show only their bookings
-        # If not, allow access with booking number (for guests)
         if self.request.user.is_authenticated:
             return Booking.objects.filter(user=self.request.user)
         return Booking.objects.all()
@@ -246,6 +244,9 @@ class VerifyPaymentView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        from apps.cart.models import Cart, OrderDetail, OrderItem
+        from django.utils import timezone
+
         session_id = request.data.get('session_id')
         booking_number = request.data.get('booking_number')
 
@@ -265,48 +266,33 @@ class VerifyPaymentView(APIView):
         # Get booking
         booking = get_object_or_404(Booking, booking_number=booking_number)
         booking.status = 'completed'
+        booking.payment_status = 'paid'
+        booking.order.status = 'completed'
         booking.save()
 
+        # Find and close the active cart
+        cart = None
+        if booking.user:
+            cart = Cart.objects.filter(user=booking.user, status='open').order_by('-last_activity').first()
+        else:
+            cart = Cart.objects.filter(session_id=session_id, status='open').order_by('-last_activity').first()
+        if cart:
+            cart.close_cart()
+            
+
         return Response({
+            "booking_number": booking.booking_number,
+            "customer_email": session.customer_email,
             "payment_status": session.payment_status,
             "booking_status": booking.status,
             "booking_payment_status": booking.payment_status,
-            "amount_total": session.amount_total / 100,  # Convert from cents
-            "customer_email": session.customer_email,
+            "paid_amount": session.amount_total / 100,
+            "sub_total": booking.subtotal,
+            "tax": booking.tax,
+            "total_amount": booking.total_amount,
         }, status=status.HTTP_200_OK)
     
     
-    def get(self, request):
-        session_id = request.query_params.get('session_id')
-        booking_number = request.query_params.get('booking_number')
-
-        if not session_id:
-            return Response({
-                "error": "session_id is required"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Retrieve session from Stripe
-        session = retrieve_checkout_session(session_id)
-
-        if not session:
-            return Response({
-                "error": "Invalid session"
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        # Get booking
-        booking = get_object_or_404(Booking, booking_number=booking_number)
-        booking.status = 'completed'
-        booking.save()
-
-        return Response({
-            "payment_status": session.payment_status,
-            "booking_status": booking.status,
-            "booking_payment_status": booking.payment_status,
-            "amount_total": session.amount_total / 100,  # Convert from cents
-            "customer_email": session.customer_email,
-        }, status=status.HTTP_200_OK)
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class StripeWebhookView(APIView):
     """Handle Stripe webhook events"""

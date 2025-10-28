@@ -1,5 +1,5 @@
 from django import forms
-from .models import Booking, BookingService, Payment
+from .models import Booking, Payment
 
 
 class BookingAdminForm(forms.ModelForm):
@@ -13,17 +13,6 @@ class BookingAdminForm(forms.ModelForm):
             'booking_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'special_requests': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'admin_notes': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-        }
-
-
-class BookingServiceInlineForm(forms.ModelForm):
-    """Inline form for BookingService"""
-    
-    class Meta:
-        model = BookingService
-        fields = '__all__'
-        widgets = {
-            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
         }
 
 

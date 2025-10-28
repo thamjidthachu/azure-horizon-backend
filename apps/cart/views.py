@@ -29,18 +29,6 @@ from .serializers import (
 from apps.service.models import Service
 
 
-class CartListCreateView(generics.ListCreateAPIView):
-    """List user's carts or create a new cart"""
-    serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user, is_active=True)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
 class CartDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update or delete a specific cart"""
     serializer_class = CartSerializer
@@ -206,44 +194,35 @@ def checkout_cart(request):
                 service=cart_item.service,
                 quantity=cart_item.quantity,
                 unit_price=cart_item.unit_price,
-                total_price=cart_item.total_price,
-                booking_date=cart_item.booking_date,
-                booking_time=cart_item.booking_time,
-                special_requests=cart_item.special_requests
+                total_price=cart_item.total_price
             )
 
         # --- Create or reuse Booking and Payment records ---
-        from apps.bookings.models import Booking, BookingService, Payment
+        from apps.bookings.models import Booking, Payment
         # Try to find an existing booking for this user/cart/session that is not paid/cancelled
         booking = Booking.objects.filter(
             user=request.user,
-            guest_email=serializer.validated_data['customer_email'],
             status__in=['pending', 'confirmed', 'in_progress'],
             payment_status__in=['unpaid', 'partial']
         ).order_by('-created_at').first()
 
         if booking:
             # Update booking details
-            booking.guest_name = serializer.validated_data['customer_name']
-            booking.guest_phone = serializer.validated_data['customer_phone']
-            booking.booking_date = cart_items.first().booking_date if cart_items.exists() else timezone.now().date()
-            booking.booking_time = cart_items.first().booking_time if cart_items.exists() else None
+            booking.order = order
+            booking.booking_date = timezone.now().date()
+            booking.booking_time = timezone.now().time()
             booking.number_of_guests = cart.get_items_count()
             booking.subtotal = cart.subtotal
             booking.tax = cart.tax
             booking.total_amount = cart.total_amount
             booking.special_requests = serializer.validated_data.get('special_instructions', '')
             booking.save()
-            # Remove old BookingService records and recreate from cart
-            booking.booking_services.all().delete()
         else:
             booking = Booking(
                 user=request.user,
-                guest_name=serializer.validated_data['customer_name'],
-                guest_email=serializer.validated_data['customer_email'],
-                guest_phone=serializer.validated_data['customer_phone'],
-                booking_date=cart_items.first().booking_date if cart_items.exists() else timezone.now().date(),
-                booking_time=cart_items.first().booking_time if cart_items.exists() else None,
+                order=order,
+                booking_date=timezone.now().date(),
+                booking_time=timezone.now().time(),
                 number_of_guests=cart.get_items_count(),
                 status='pending',
                 payment_status='unpaid',
@@ -254,17 +233,6 @@ def checkout_cart(request):
             )
             booking.save()
 
-        for cart_item in cart_items:
-            BookingService.objects.create(
-                booking=booking,
-                service=cart_item.service,
-                quantity=cart_item.quantity,
-                unit_price=cart_item.unit_price,
-                total_price=cart_item.total_price,
-                notes=cart_item.special_requests
-            )
-
-        # Now update totals after all BookingService records are created
         booking.calculate_totals()
         booking.save()
 
@@ -274,6 +242,7 @@ def checkout_cart(request):
             payment_status='pending',
             payment_method='online'
         ).order_by('-payment_date').first()
+
         if payment:
             payment.amount = cart.total_amount
             payment.notes = 'Stripe payment initiated from cart checkout.'

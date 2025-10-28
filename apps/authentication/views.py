@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
+from django.utils.crypto import get_random_string
 from rest_framework import status, generics
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,7 +9,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
 
-from .serializers import UserSerializer, RegisterSerializer
+from django.db.models import Q
+from .serializers import UserSerializer, RegisterSerializer, ForgotPasswordSerializer, PasswordResetSerializer
+from utils.email import send_email_message
 
 User = get_user_model()
 
@@ -62,30 +65,24 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request, *args, **kwargs):
-        username_or_email = request.data.get('username')
+        username = request.data.get('username')
         password = request.data.get('password')
 
-        if not username_or_email or not password:
+        if not username or not password:
             return Response(
                 {'detail': 'Please provide both username/email and password'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        user = User.objects.filter(Q(email=username) | Q(username=username)).first()
+        if user is None:
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Determine if input is email or username
-        if '@' in username_or_email:
-            try:
-                user_obj = User.objects.get(email=username_or_email)
-                username = user_obj.username
-            except User.DoesNotExist:
-                return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            username = username_or_email
-
-        user = authenticate(request, username=username, password=password)
+        email = user.email
+        user = authenticate(request, email=email, password=password)
 
         if user is None:
             return Response(
-                {'detail': 'Invalid credentials'},
+                {'detail': 'Invalid Credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -152,3 +149,44 @@ class ProfileView(APIView):
     
     def get_serializer_context(self):
         return {'request': self.request}
+
+class ForgotPasswordView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        user = User.objects.filter(Q(email=username) | Q(username=username)).first()
+        token = get_random_string(32)
+        user.reset_token = token
+        user.save(update_fields=['reset_token'])
+        # Send reset email
+        # send_email_message.delay(
+        send_email_message(
+            subject="Password Reset Request",
+            template_name="password-reset.html",
+            context={"reset_token": token, "email": user.email, "full_name": user.full_name},
+            recipient_list=[user.email]
+        )
+        return Response({"message": "Password reset instructions sent to your email."}, status=status.HTTP_200_OK)
+
+class PasswordResetView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+        try:
+            user = User.objects.filter(
+                (Q(email=username) | Q(username=username)) & Q(reset_token=token)
+                ).first()
+        except User.DoesNotExist:
+            return Response({"error": "Invalid token or email/username."}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(new_password)
+        user.reset_token = None
+        user.save(update_fields=['password', 'reset_token'])
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)

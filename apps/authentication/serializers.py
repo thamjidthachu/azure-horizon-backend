@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from utils.email import send_email_message
+from django.db.models import Q
 
 from apps.authentication.models import User
 
@@ -102,4 +103,28 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authorization')
 
         attrs['user'] = user
+        return attrs
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField()
+
+    def validate_username(self, value):
+        if not User.objects.filter(Q(email=value) | Q(username=value)).exists():
+            raise serializers.ValidationError("No user is associated with this username.")
+        return value
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        token = attrs.get('token')
+        if not User.objects.filter(
+                (Q(email=username) | Q(username=username)) & Q(reset_token=token)
+                ).exists():
+            raise serializers.ValidationError("Invalid token or email/username.")
         return attrs

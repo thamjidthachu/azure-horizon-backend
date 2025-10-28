@@ -124,7 +124,7 @@ class OrderDetail(TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True, related_name='orders')
     
-    # Customer Information (copied from cart/user at checkout)
+    # Customer Information (copied user at checkout)
     customer_name = models.CharField(max_length=200)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=20)
@@ -190,11 +190,6 @@ class OrderItem(TimeStampedModel):
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    # Service booking details
-    booking_date = models.DateField(null=True, blank=True)
-    booking_time = models.TimeField(null=True, blank=True)
-    special_requests = models.TextField(null=True, blank=True)
     
     # Item status
     status = models.CharField(max_length=20, default='pending')

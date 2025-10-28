@@ -47,7 +47,6 @@ class CartSerializer(serializers.ModelSerializer):
         for cart_item in obj.cart_items.filter(is_active=True):
             service = cart_item.service
             service_image = ''
-            # Try to get the first image from service.files (FileSerializer)
             if service and hasattr(service, 'file_set'):
                 file_qs = service.file_set.all()
                 if file_qs.exists():
@@ -60,8 +59,6 @@ class CartSerializer(serializers.ModelSerializer):
                 'service_name': getattr(service, 'name', None),
                 'service_price': str(getattr(service, 'price', '')),
                 'quantity': cart_item.quantity,
-                'booking_date': cart_item.booking_date,
-                'booking_time': cart_item.booking_time,
                 'subtotal': str(cart_item.total_price),
                 'service_slug': getattr(service, 'slug', None),
                 'service_image': service_image,
@@ -70,7 +67,6 @@ class CartSerializer(serializers.ModelSerializer):
                 'unit': getattr(service, 'unit', None),
                 'rating': getattr(service, 'rating', None) if hasattr(service, 'rating') else None,
                 'review_count': getattr(service, 'review_count', None) if hasattr(service, 'review_count') else None,
-                'special_requests': cart_item.special_requests,
                 'is_active': cart_item.is_active,
                 'created_at': cart_item.created_at,
             }
@@ -114,8 +110,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'service', 'quantity', 'unit_price', 'total_price',
-            'booking_date', 'booking_time', 'special_requests', 'status'
+            'id', 'service', 'quantity', 'unit_price', 'total_price', 'status'
         ]
 
 

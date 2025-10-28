@@ -13,7 +13,7 @@ urlpatterns = [
     path('create/', BookingCreateView.as_view(), name='booking-create'),
     path('my-bookings/', MyBookingsView.as_view(), name='my-bookings'),
     path('list/', BookingListView.as_view(), name='booking-list'),
-    path('<str:booking_number>/', BookingDetailView.as_view(), name='booking-detail'),
+    path('<str:booking_number>/details/', BookingDetailView.as_view(), name='booking-detail'),
     path('<str:booking_number>/update-status/', BookingUpdateStatusView.as_view(), name='booking-update-status'),
     path('<str:booking_number>/cancel/', BookingCancelView.as_view(), name='booking-cancel'),
     

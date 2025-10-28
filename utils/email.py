@@ -8,8 +8,8 @@ from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
 
-@shared_task(bind=True, max_retries=3)
-def send_email_message(self, subject, template_name, context, recipient_list, from_email=None):
+# @shared_task(bind=True, max_retries=3)
+def send_email_message(subject, template_name, context, recipient_list, from_email=None):
     """
     Utility function to send HTML emails with template
 

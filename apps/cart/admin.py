@@ -70,6 +70,6 @@ class OrderDetailAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'order', 'service', 'quantity', 'unit_price', 'total_price', 'status')
-    list_filter = ('status', 'booking_date', 'created_at')
+    list_filter = ('status', 'created_at')
     search_fields = ('service__name', 'order__order_number', 'order__customer_name')
     readonly_fields = ('total_price', 'created_at', 'updated_at')

@@ -1,16 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Booking, BookingService, Payment
-from .forms import BookingAdminForm, BookingServiceInlineForm, PaymentInlineForm
 
-
-class BookingServiceInline(admin.TabularInline):
-    model = BookingService
-    form = BookingServiceInlineForm
-    extra = 1
-    fields = ['service', 'quantity', 'unit_price', 'total_price', 'notes']
-    readonly_fields = ['total_price']
-
+from .models import Booking, Payment
+from .forms import BookingAdminForm, PaymentInlineForm
 
 class PaymentInline(admin.TabularInline):
     model = Payment
@@ -23,10 +15,10 @@ class PaymentInline(admin.TabularInline):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     form = BookingAdminForm
-    inlines = [BookingServiceInline, PaymentInline]
+    inlines = [PaymentInline]
     
     list_display = [
-        'booking_number', 'guest_name', 'guest_email', 'booking_date', 
+        'booking_number', 'booking_date', 
         'number_of_guests', 'status_badge', 'payment_status_badge', 
         'total_amount', 'created_at'
     ]
@@ -34,8 +26,7 @@ class BookingAdmin(admin.ModelAdmin):
     list_filter = ['status', 'payment_status', 'booking_date', 'created_at']
     
     search_fields = [
-        'booking_number', 'guest_name', 'guest_email', 'guest_phone', 
-        'user__email', 'user__username'
+        'booking_number', 'user__email', 'user__username'
     ]
     
     readonly_fields = [
@@ -45,16 +36,10 @@ class BookingAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Booking Information', {
-            'fields': ('booking_number', 'user', 'status', 'payment_status')
-        }),
-        ('Guest Details', {
-            'fields': ('guest_name', 'guest_email', 'guest_phone')
+            'fields': ('booking_number', 'user', 'order', 'status', 'payment_status')
         }),
         ('Reservation Details', {
-            'fields': ('booking_date', 'booking_time', 'number_of_guests', 'special_requests')
-        }),
-        ('Pricing', {
-            'fields': ('subtotal', 'tax', 'total_amount')
+            'fields': ('booking_date', 'booking_time', 'number_of_guests', 'special_requests', 'subtotal', 'tax', 'total_amount')
         }),
         ('Admin', {
             'fields': ('admin_notes', 'is_active', 'is_deleted'),
@@ -118,8 +103,7 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ['payment_status', 'payment_method', 'payment_date']
     
     search_fields = [
-        'booking__booking_number', 'transaction_id', 
-        'booking__guest_name', 'booking__guest_email'
+        'booking__booking_number', 'transaction_id',
     ]
     
     readonly_fields = ['payment_date']
