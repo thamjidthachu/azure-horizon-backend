@@ -8,6 +8,7 @@ on:
 
 jobs:
 
+
   build:
     runs-on: ubuntu-latest
     services:
@@ -45,7 +46,7 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_HOST=postgres" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "EMAIL=${{ secrets.EMAIL }}" >> .env
           echo "DEFAULT_EMAIL=${{ secrets.DEFAULT_EMAIL }}" >> .env
@@ -61,7 +62,6 @@ jobs:
           echo "STRIPE_SECRET=${{ secrets.STRIPE_SECRET }}" >> .env
           echo "PAYMENT_SUCCESS_URL=${{ secrets.PAYMENT_SUCCESS_URL }}" >> .env
           echo "PAYMENT_CANCEL_URL=${{ secrets.PAYMENT_CANCEL_URL }}" >> .env
-
 
       - name: Run migrations
         run: |
