@@ -1,6 +1,6 @@
 
-from apps.utils.logger import get_logger
-email_logger = get_logger('email')
+import logging
+email_logger = logging.getLogger('system_logs')
 
 from celery import shared_task
 from django.conf import settings

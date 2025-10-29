@@ -2,7 +2,7 @@ from django.db import models
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from apps.service.models import Service
-from apps.utils.abstract_models import ActiveModel, TimeStampedModel
+from utils.abstract_models import ActiveModel, TimeStampedModel
 from utils import CartStatusChoices
 from utils.choices import OrderStatusChoices, PaymentStatusChoices
 

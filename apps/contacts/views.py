@@ -4,8 +4,8 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 
 from utils import send_email_message
-from apps.utils.logger import get_logger
-contact_logger = get_logger('contact')
+import logging
+contact_logger = logging.getLogger('system_logs')
 
 from apps.contacts.models import ContactMessage
 from apps.contacts.serializers import ContactMessageSerializer

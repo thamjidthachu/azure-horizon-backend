@@ -1,5 +1,5 @@
-from apps.utils.logger import get_logger
-auth_logger = get_logger('authentication')
+import logging
+auth_logger = logging.getLogger('authentication')
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.crypto import get_random_string

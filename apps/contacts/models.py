@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.utils.abstract_models import TimeStampedModel
+from utils.abstract_models import TimeStampedModel
 
 # Create your models here.
 

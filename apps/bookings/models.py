@@ -4,8 +4,7 @@ from decimal import Decimal
 
 from apps.authentication.models import User
 from apps.cart.models import OrderDetail
-from apps.utils import ActiveModel, TimeStampedModel
-from utils import BookingStatusChoices, PaymentMethodChoices, PaymentStatusChoices
+from utils import ActiveModel, TimeStampedModel, BookingStatusChoices, PaymentMethodChoices, PaymentStatusChoices
 
 
 class Booking(TimeStampedModel, ActiveModel):

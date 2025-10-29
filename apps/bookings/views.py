@@ -18,10 +18,10 @@ from .stripe_utils import (
     create_checkout_session, retrieve_checkout_session,
     verify_webhook_signature, handle_checkout_session_completed
 )
-from apps.utils.logger import get_logger
+import logging
 
-booking_logger = get_logger('booking')
-payment_logger = get_logger('payment')
+booking_logger = logging.getLogger('system_logs')
+payment_logger = logging.getLogger('payment_logs')
 
 
 class BookingPagination(PageNumberPagination):

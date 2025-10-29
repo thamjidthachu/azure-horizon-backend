@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from django.contrib.contenttypes.models import ContentType
 
 from apps.authentication.models import User
-from apps.utils import ActiveModel, TimeStampedModel
+from utils import ActiveModel, TimeStampedModel
 
 
 class Advertisement(TimeStampedModel, ActiveModel):

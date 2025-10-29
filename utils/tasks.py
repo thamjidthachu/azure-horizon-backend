@@ -5,8 +5,8 @@ User = get_user_model()
 @shared_task
 def test_celery_task(x, y):
     """Simple test task to verify Celery is working"""
-    from apps.utils.logger import get_logger
-    celery_logger = get_logger('celery')
+    import logging
+    celery_logger = logging.getLogger('system_logs')
     result = x + y
     celery_logger.info(f"Celery task executed: {x} + {y} = {result}")
     return result
@@ -16,8 +16,8 @@ def send_welcome_email_task(user_id, password):
     """
     Alternative task to send welcome email - more modular approach
     """
-    from apps.utils.logger import get_logger
-    celery_logger = get_logger('celery')
+    import logging
+    celery_logger = logging.getLogger('system_logs')
     try:
         user = User.objects.get(id=user_id)
         from utils.email import send_email_message
