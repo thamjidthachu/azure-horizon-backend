@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from apps.service.models import Service
 from apps.utils.abstract_models import ActiveModel, TimeStampedModel
+from utils import CartStatusChoices
+from utils.choices import OrderStatusChoices, PaymentStatusChoices
 
 User = get_user_model()
 
@@ -10,16 +12,10 @@ User = get_user_model()
 class Cart(TimeStampedModel, ActiveModel):
     """Shopping cart model for users to add services before booking"""
     
-    STATUS_CHOICES = (
-        ('open', 'Open'),
-        ('closed', 'Closed'),
-        ('abandoned', 'Abandoned'),
-    )
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')
     session_id = models.CharField(max_length=100, null=True, blank=True, help_text="For guest users")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-    
+    status = models.CharField(max_length=24, choices=CartStatusChoices.choices, default=CartStatusChoices.OPEN)
+
     # Cart totals
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -104,21 +100,6 @@ class CartItem(TimeStampedModel, ActiveModel):
 class OrderDetail(TimeStampedModel):
     """Order details created when user checks out the cart"""
     
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('processing', 'Processing'),
-        ('confirmed', 'Confirmed'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-    )
-    
-    PAYMENT_STATUS_CHOICES = (
-        ('unpaid', 'Unpaid'),
-        ('partial', 'Partial'),
-        ('paid', 'Paid'),
-        ('refunded', 'Refunded'),
-    )
-    
     # Order Information
     order_number = models.CharField(max_length=50, unique=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
@@ -130,9 +111,9 @@ class OrderDetail(TimeStampedModel):
     customer_phone = models.CharField(max_length=20)
     
     # Order Status
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
-    
+    status = models.CharField(max_length=24, choices=OrderStatusChoices.choices, default=OrderStatusChoices.PENDING)
+    payment_status = models.CharField(max_length=24, choices=PaymentStatusChoices.choices, default=PaymentStatusChoices.INITIATED)
+
     # Order Totals (snapshot from cart at checkout)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2)

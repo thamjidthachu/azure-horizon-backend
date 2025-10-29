@@ -3,6 +3,8 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.base_user import BaseUserManager
 
+from utils import GenderChoices
+
 
 class UserManager(BaseUserManager):
     """
@@ -47,15 +49,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     create class User from Abstraction and Permissions (from low_level) to give us
     full control to create user with role and other options not include in normal user
     """
-    GENDER_CHOICES = (
-        ('F', 'Female'),
-        ('M', 'Male'),
-    )
     username = models.CharField(max_length=50)
     full_name = models.CharField(max_length=150)
     email = models.EmailField(db_index=True, unique=True)
     phone = models.CharField(max_length=50)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    gender = models.CharField(max_length=1, choices=GenderChoices.choices)
     avatar = models.FileField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

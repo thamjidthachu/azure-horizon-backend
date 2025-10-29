@@ -4,31 +4,16 @@ from decimal import Decimal
 
 from apps.authentication.models import User
 from apps.cart.models import OrderDetail
-from apps.service.models import Service
 from apps.utils import ActiveModel, TimeStampedModel
+from utils import BookingStatusChoices, PaymentMethodChoices, PaymentStatusChoices
 
 
 class Booking(TimeStampedModel, ActiveModel):
     """Main booking model for resort service reservations"""
     
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-    )
-    
-    PAYMENT_STATUS_CHOICES = (
-        ('unpaid', 'Unpaid'),
-        ('partial', 'Partial'),
-        ('paid', 'Paid'),
-        ('refunded', 'Refunded'),
-    )
-    
-    # Customer Information
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     order = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True, blank=True) 
+
     # Booking Details
     booking_number = models.CharField(max_length=50, unique=True, editable=False)
     booking_date = models.DateField(help_text="Date of the booking/reservation")
@@ -36,8 +21,8 @@ class Booking(TimeStampedModel, ActiveModel):
     number_of_guests = models.PositiveIntegerField(default=1)
     
     # Status and Payment
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
+    status = models.CharField(max_length=24, choices=BookingStatusChoices.choices, default=BookingStatusChoices.PENDING)
+    payment_status = models.CharField(max_length=24, choices=PaymentStatusChoices.choices, default=PaymentStatusChoices.INITIATED)
     
     # Pricing
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -85,26 +70,11 @@ class Booking(TimeStampedModel, ActiveModel):
 class Payment(TimeStampedModel):
     """Payment records for bookings"""
     
-    PAYMENT_METHOD_CHOICES = (
-        ('cash', 'Cash'),
-        ('credit_card', 'Credit Card'),
-        ('debit_card', 'Debit Card'),
-        ('bank_transfer', 'Bank Transfer'),
-        ('online', 'Online Payment'),
-    )
-    
-    PAYMENT_STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('failed', 'Failed'),
-        ('refunded', 'Refunded'),
-    )
-    
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
     
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
-    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(max_length=24, choices=PaymentMethodChoices.choices, default=PaymentMethodChoices.ONLINE)
+    payment_status = models.CharField(max_length=24, choices=PaymentStatusChoices.choices, default=PaymentStatusChoices.INITIATED)
     
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
     session_id = models.CharField(max_length=200, null=True, blank=True, help_text="Stripe session ID for payment tracking")
