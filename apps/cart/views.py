@@ -15,11 +15,10 @@ class CartItemViewSet(mixins.UpdateModelMixin, mixins.RetrieveModelMixin, viewse
         return CartItem.objects.filter(cart__user=self.request.user, cart__status='open', is_active=True)
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from decimal import Decimal
 
 from .models import Cart, CartItem, OrderDetail, OrderItem
 from .serializers import (

@@ -2,14 +2,14 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-import json
 
-from .models import Booking, Payment
+
+from .models import Booking
 from .serializers import (
     BookingListSerializer, BookingDetailSerializer, 
     BookingCreateSerializer, PaymentSerializer
@@ -18,6 +18,10 @@ from .stripe_utils import (
     create_checkout_session, retrieve_checkout_session,
     verify_webhook_signature, handle_checkout_session_completed
 )
+from apps.utils.logger import get_logger
+
+booking_logger = get_logger('booking')
+payment_logger = get_logger('payment')
 
 
 class BookingPagination(PageNumberPagination):
@@ -33,16 +37,15 @@ class BookingCreateView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        
         if serializer.is_valid():
             booking = serializer.save()
             detail_serializer = BookingDetailSerializer(booking)
-            
+            booking_logger.info(f"Booking created: booking_number={booking.booking_number}, user={getattr(booking.user, 'id', None)}")
             return Response({
                 "message": "Your booking has been created successfully! A confirmation email has been sent.",
                 "booking": detail_serializer.data
             }, status=status.HTTP_201_CREATED)
-        
+        booking_logger.warning(f"Booking creation failed: errors={serializer.errors}")
         return Response({
             "error": "Something went wrong. Please check your booking details and try again.",
             "details": serializer.errors
@@ -78,25 +81,20 @@ class BookingUpdateStatusView(APIView):
     permission_classes = [IsAuthenticated]
     
     def patch(self, request, booking_number):
-        # Check if user is staff
         if not request.user.is_staff:
+            booking_logger.warning(f"Unauthorized booking status update attempt by user_id={request.user.id}")
             return Response({
                 "error": "You don't have permission to update booking status"
             }, status=status.HTTP_403_FORBIDDEN)
-        
         booking = get_object_or_404(Booking, booking_number=booking_number)
-        
         new_status = request.data.get('status')
         admin_notes = request.data.get('admin_notes')
-        
         if new_status and new_status in dict(Booking.STATUS_CHOICES).keys():
             booking.status = new_status
-        
         if admin_notes:
             booking.admin_notes = admin_notes
-        
         booking.save()
-        
+        booking_logger.info(f"Booking status updated: booking_number={booking.booking_number}, new_status={booking.status}, admin_id={request.user.id}")
         serializer = BookingDetailSerializer(booking)
         return Response({
             "message": "Booking status updated successfully",
@@ -110,30 +108,27 @@ class BookingCancelView(APIView):
     
     def post(self, request, booking_number):
         booking = get_object_or_404(Booking, booking_number=booking_number)
-        
-        # Check if user owns the booking or is staff
         if request.user.is_authenticated:
             if booking.user != request.user and not request.user.is_staff:
+                booking_logger.warning(f"Unauthorized booking cancel attempt: booking_number={booking.booking_number}, user_id={request.user.id}")
                 return Response({
                     "error": "You don't have permission to cancel this booking"
                 }, status=status.HTTP_403_FORBIDDEN)
         else:
-            # For guest bookings, verify email
             guest_email = request.data.get('email')
             if booking.guest_email != guest_email:
+                booking_logger.warning(f"Guest booking cancel failed: booking_number={booking.booking_number}, guest_email={guest_email}")
                 return Response({
                     "error": "Invalid email for this booking"
                 }, status=status.HTTP_403_FORBIDDEN)
-        
-        # Check if booking can be cancelled
         if booking.status in ['completed', 'cancelled']:
+            booking_logger.info(f"Cancel attempt on completed/cancelled booking: booking_number={booking.booking_number}, status={booking.status}")
             return Response({
                 "error": f"Cannot cancel a booking that is already {booking.status}"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
         booking.status = 'cancelled'
         booking.save()
-        
+        booking_logger.info(f"Booking cancelled: booking_number={booking.booking_number}")
         return Response({
             "message": "Booking cancelled successfully",
             "booking_number": booking.booking_number
@@ -147,31 +142,26 @@ class PaymentCreateView(generics.CreateAPIView):
     
     def create(self, request, booking_number):
         if not request.user.is_staff:
+            payment_logger.warning(f"Unauthorized payment creation attempt by user_id={request.user.id}")
             return Response({
                 "error": "You don't have permission to create payments"
             }, status=status.HTTP_403_FORBIDDEN)
-        
         booking = get_object_or_404(Booking, booking_number=booking_number)
-        
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             payment = serializer.save(booking=booking)
-            
-            # Update booking payment status based on total paid
             total_paid = sum(p.amount for p in booking.payments.filter(payment_status='completed'))
-            
             if total_paid >= booking.total_amount:
                 booking.payment_status = 'paid'
             elif total_paid > 0:
                 booking.payment_status = 'partial'
-            
             booking.save()
-            
+            payment_logger.info(f"Payment created: payment_id={payment.id}, booking_number={booking.booking_number}, amount={payment.amount}, user_id={request.user.id}")
             return Response({
                 "message": "Payment recorded successfully",
                 "payment": PaymentSerializer(payment).data
             }, status=status.HTTP_201_CREATED)
-        
+        payment_logger.warning(f"Payment creation failed: errors={serializer.errors}")
         return Response({
             "error": "Invalid payment data",
             "details": serializer.errors
@@ -196,43 +186,39 @@ class CreateCheckoutSessionView(APIView):
     
     def post(self, request, booking_number):
         booking = get_object_or_404(Booking, booking_number=booking_number)
-        
-        # Verify booking belongs to user (if authenticated) or email matches (for guests)
         if request.user.is_authenticated:
             if booking.user and booking.user != request.user and not request.user.is_staff:
+                payment_logger.warning(f"Unauthorized checkout session attempt: booking_number={booking.booking_number}, user_id={request.user.id}")
                 return Response({
                     "error": "You don't have permission to pay for this booking"
                 }, status=status.HTTP_403_FORBIDDEN)
         else:
-            # For guest bookings, verify email
             guest_email = request.data.get('email')
             if booking.guest_email != guest_email:
+                payment_logger.warning(f"Guest checkout session failed: booking_number={booking.booking_number}, guest_email={guest_email}")
                 return Response({
                     "error": "Invalid email for this booking"
                 }, status=status.HTTP_403_FORBIDDEN)
-        
-        # Check if booking is already paid
         if booking.payment_status == 'paid':
+            payment_logger.info(f"Checkout session attempt for already paid booking: booking_number={booking.booking_number}")
             return Response({
                 "error": "This booking has already been paid"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check if booking is cancelled
         if booking.status == 'cancelled':
+            payment_logger.info(f"Checkout session attempt for cancelled booking: booking_number={booking.booking_number}")
             return Response({
                 "error": "Cannot pay for a cancelled booking"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Create Stripe checkout session
         result = create_checkout_session(booking)
-        
         if result['success']:
+            payment_logger.info(f"Checkout session created: booking_number={booking.booking_number}, session_id={result['session_id']}")
             return Response({
                 "message": "Checkout session created successfully",
                 "session_id": result['session_id'],
                 "checkout_url": result['checkout_url'],
             }, status=status.HTTP_200_OK)
         else:
+            payment_logger.error(f"Checkout session creation failed: booking_number={booking.booking_number}, error={result.get('error')}")
             return Response({
                 "error": "Failed to create checkout session",
                 "details": result.get('error')
@@ -246,31 +232,24 @@ class VerifyPaymentView(APIView):
     def post(self, request):
         from apps.cart.models import Cart, OrderDetail, OrderItem
         from django.utils import timezone
-
         session_id = request.data.get('session_id')
         booking_number = request.data.get('booking_number')
-
         if not session_id:
+            payment_logger.warning(f"Verify payment failed: session_id missing")
             return Response({
                 "error": "session_id is required"
             }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Retrieve session from Stripe
         session = retrieve_checkout_session(session_id)
-
         if not session:
+            payment_logger.warning(f"Verify payment failed: invalid session_id={session_id}")
             return Response({
                 "error": "Invalid session"
             }, status=status.HTTP_404_NOT_FOUND)
-
-        # Get booking
         booking = get_object_or_404(Booking, booking_number=booking_number)
         booking.status = 'completed'
         booking.payment_status = 'paid'
         booking.order.status = 'completed'
         booking.save()
-
-        # Find and close the active cart
         cart = None
         if booking.user:
             cart = Cart.objects.filter(user=booking.user, status='open').order_by('-last_activity').first()
@@ -278,8 +257,7 @@ class VerifyPaymentView(APIView):
             cart = Cart.objects.filter(session_id=session_id, status='open').order_by('-last_activity').first()
         if cart:
             cart.close_cart()
-            
-
+        payment_logger.info(f"Payment verified: booking_number={booking.booking_number}, session_id={session_id}, user_id={getattr(booking.user, 'id', None)}")
         return Response({
             "booking_number": booking.booking_number,
             "customer_email": session.customer_email,
@@ -300,6 +278,9 @@ class StripeWebhookView(APIView):
     
     def post(self, request):
         payload = request.body
+        payment_logger.info(f"Stripe webhook Data: {request.body}")
+        payment_logger.info(f"Stripe webhook Headers: {request.headers}")
+
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
         if not sig_header:

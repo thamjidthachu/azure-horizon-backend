@@ -1,4 +1,6 @@
-import logging
+
+from apps.utils.logger import get_logger
+email_logger = get_logger('email')
 
 from celery import shared_task
 from django.conf import settings
@@ -6,7 +8,6 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-logger = logging.getLogger(__name__)
 
 # @shared_task(bind=True, max_retries=3)
 def send_email_message(subject, template_name, context, recipient_list, from_email=None):
@@ -26,30 +27,18 @@ def send_email_message(subject, template_name, context, recipient_list, from_ema
     try:
         if from_email is None:
             from_email = settings.DEFAULT_FROM_EMAIL
-
-        # Render HTML email template
         html_content = render_to_string(template_name, context)
-
-        # Create plain text version
         text_content = strip_tags(html_content)
-
-        # Create EmailMultiAlternatives object
         email_msg = EmailMultiAlternatives(
             subject=subject,
             body=text_content,
             from_email=from_email,
             to=recipient_list
         )
-
-        # Attach HTML version
         email_msg.attach_alternative(html_content, "text/html")
-
-        # Send the email
         email_msg.send()
-
-        logger.info(f"HTML email sent successfully to {recipient_list}")
+        email_logger.info(f"HTML email sent successfully to {recipient_list} | subject={subject}")
         return True
-
     except Exception as e:
-        logger.error(f"Failed to send HTML email: {str(e)}")
-        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+        email_logger.error(f"Failed to send HTML email: {str(e)}")
+        raise
