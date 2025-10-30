@@ -1,5 +1,18 @@
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework import status, generics
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-# --- CartItemViewSet for PATCH ---
+from utils.choices import BookingStatusChoices, PaymentMethodChoices, PaymentStatusChoices, CartStatusChoices
+
+from .models import Cart, CartItem, OrderDetail, OrderItem
+from .serializers import (
+    CartSerializer, CartItemSerializer, AddToCartSerializer,
+    UpdateCartItemSerializer, OrderDetailSerializer, CheckoutSerializer
+)
+from apps.service.models import Service
 from .models import CartItem  # Ensure CartItem is imported before use
 from .serializers import CartItemSerializer  # Import serializer before use
 from rest_framework import viewsets, mixins
@@ -13,19 +26,7 @@ class CartItemViewSet(mixins.UpdateModelMixin, mixins.RetrieveModelMixin, viewse
     def get_queryset(self):
         # Only allow access to user's own cart items in open carts
         return CartItem.objects.filter(cart__user=self.request.user, cart__status='open', is_active=True)
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from rest_framework import status, generics
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
-from .models import Cart, CartItem, OrderDetail, OrderItem
-from .serializers import (
-    CartSerializer, CartItemSerializer, AddToCartSerializer,
-    UpdateCartItemSerializer, OrderDetailSerializer, CheckoutSerializer
-)
-from apps.service.models import Service
 
 
 class CartDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -42,9 +43,9 @@ class CartDetailView(generics.RetrieveUpdateDestroyAPIView):
 def get_or_create_active_cart(request):
     """Get user's active cart or create one if none exists"""
     try:
-        cart = Cart.objects.get(user=request.user, status='open', is_active=True)
+        cart = Cart.objects.get(user=request.user, status=CartStatusChoices.OPEN, is_active=True)
     except Cart.DoesNotExist:
-        cart = Cart.objects.create(user=request.user, status='open')
+        cart = Cart.objects.create(user=request.user, status=CartStatusChoices.OPEN)
     
     serializer = CartSerializer(cart)
     return Response(serializer.data)
@@ -59,7 +60,7 @@ def add_to_cart(request):
         # Get or create active cart
         cart, created = Cart.objects.get_or_create(
             user=request.user,
-            status='open',
+            status=CartStatusChoices.OPEN,
             is_active=True,
             defaults={'user': request.user}
         )
@@ -103,7 +104,7 @@ def update_cart_item(request, item_id):
         CartItem,
         id=item_id,
         cart__user=request.user,
-        cart__status='open',
+        cart__status=CartStatusChoices.OPEN,
         is_active=True
     )
     
@@ -128,7 +129,7 @@ def remove_from_cart(request, item_id):
         CartItem,
         id=item_id,
         cart__user=request.user,
-        cart__status='open',
+        cart__status=CartStatusChoices.OPEN,
         is_active=True
     )
     
@@ -223,8 +224,8 @@ def checkout_cart(request):
                 booking_date=timezone.now().date(),
                 booking_time=timezone.now().time(),
                 number_of_guests=cart.get_items_count(),
-                status='pending',
-                payment_status='unpaid',
+                status=BookingStatusChoices.PENDING,
+                payment_status=PaymentStatusChoices.INITIATED,
                 subtotal=cart.subtotal,
                 tax=cart.tax,
                 total_amount=cart.total_amount,
@@ -238,8 +239,8 @@ def checkout_cart(request):
         # Try to find an existing pending payment for this booking
         payment = Payment.objects.filter(
             booking=booking,
-            payment_status='pending',
-            payment_method='online'
+            payment_status=PaymentStatusChoices.INITIATED,
+            payment_method=PaymentMethodChoices.ONLINE
         ).order_by('-payment_date').first()
 
         if payment:
@@ -250,8 +251,8 @@ def checkout_cart(request):
             payment = Payment.objects.create(
                 booking=booking,
                 amount=cart.total_amount,
-                payment_method='online',
-                payment_status='pending',
+                payment_method=PaymentMethodChoices.ONLINE,
+                payment_status=PaymentStatusChoices.INITIATED,
                 notes='Stripe payment initiated from cart checkout.'
             )
 
@@ -299,7 +300,7 @@ def complete_payment(request, order_id):
     """Mark order as completed and close cart after successful payment"""
     order = get_object_or_404(OrderDetail, id=order_id, user=request.user)
     
-    if order.payment_status == 'paid':
+    if order.payment_status == PaymentStatusChoices.COMPLETED:
         return Response({'error': 'Order already paid'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Mark order as completed
