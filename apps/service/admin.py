@@ -13,6 +13,7 @@ class ImagesInline(admin.StackedInline):
 class CommentsInline(GenericTabularInline):
     model = Comment
     fields = ['author', 'message', 'rating']
+    readonly_fields = ['author', 'message', 'rating']
     can_delete = False
     verbose_name_plural = 'Comments'
     extra = 1
@@ -29,6 +30,7 @@ class CommentsInline(GenericTabularInline):
 
 class ServiceAdmin(admin.ModelAdmin):
     inlines = [ImagesInline, CommentsInline]
+    prepopulated_fields = {'slug': ('name',)}
     list_display = ('name', 'price', 'unit', 'time',)
     readonly_fields = ('create_time',)
 
