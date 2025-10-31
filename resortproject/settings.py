@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from decouple import config
+import dj_database_url
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,6 +52,52 @@ INSTALLED_APPS = [
     'apps.cart',
 
 ]
+
+# Jazzmin Admin Theme Settings
+JAZZMIN_SETTINGS = {
+    "site_title": "Azure Horizon",
+    "site_header": "Azure Horizon",
+    "site_brand": "Azure Horizon",
+    "site_logo": "admin/img/blue_in_indigo.jpg",
+    "login_logo": "admin/img/blue_in_indigo.jpg",
+    "login_logo_dark": None,
+    "site_logo_classes": "img-circle",
+    "site_icon": None,
+    "welcome_sign": "Welcome to Azure Horizon Admin",
+    "copyright": "Azure Horizon",
+    # Use the actual app_label.model_name for your custom user model
+    "search_model": ["authentication.user"],
+    "user_avatar": None,
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["authentication.view_user"]},
+        {"model": "authentication.user"},
+    ],
+    "usermenu_links": [
+        {"name": "Support", "url": "https://github.com/farridav/django-jazzmin/issues", "new_window": True},
+        {"model": "authentication.user"}
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["auth", "apps.authentication", "apps.service", "apps.contacts", "apps.bookings", "apps.cart"],
+    "custom_links": {},
+    "icons": {
+        # icons should reference the actual app_label.model_name where applicable
+        "authentication.user": "fas fa-user",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": False,
+    # point to a small custom css override to constrain the login logo
+    "custom_css": "jazzmin/css/custom_login.css",
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
+    "language_chooser": True,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -101,6 +148,14 @@ DATABASES = {
     }
 }
 
+# Support a single DATABASE_URL environment variable (common in hosting providers)
+# If present, it will override the individual DB_* settings above.
+DATABASE_URL = config('DATABASE_URL', default=None)
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -144,12 +199,6 @@ if not os.path.exists(static_dir):
 STATICFILES_DIRS = [
     static_dir,
 ]
-
-# Only include STATICFILES_DIRS if the static directory exists
-if os.path.exists(os.path.join(BASE_DIR, 'static')):
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
-    ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

@@ -1,0 +1,13 @@
+.jazzmin-login-page .login-logo h1,
+.jazzmin-login-page .login-logo img {
+  max-width: 320px;
+  height: auto;
+  display: block;
+  margin: 0 auto 1rem auto;
+}
+
+/* Ensure the login-logo doesn't have unexpected background */
+.jazzmin-login-page .login-logo {
+  background: transparent !important;
+  padding: 0 !important;
+}
