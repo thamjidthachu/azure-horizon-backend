@@ -46,13 +46,11 @@ class Cart(TimeStampedModel, ActiveModel):
     
     def get_items_count(self):
         """Get total number of items in cart"""
-        return self.cart_items.filter(is_active=True).aggregate(
-            total=models.Sum('quantity')
-        )['total'] or 0
+        return self.cart_items.filter(is_active=True).aggregate(total=models.Sum('quantity'))['total'] or 0
     
     def close_cart(self):
         """Close cart after successful payment"""
-        self.status = 'closed'
+        self.status = CartStatusChoices.CLOSED
         self.save()
     
     def is_empty(self):

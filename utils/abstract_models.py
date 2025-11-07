@@ -10,7 +10,7 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 class ActiveModel(models.Model):
-    id = models.BigAutoField(primary_key=True)
+    id = models.BigAutoField(auto_created=True, primary_key=True, verbose_name='ID')
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
 

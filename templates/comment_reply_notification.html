@@ -1,0 +1,15 @@
+<html>
+  <body>
+    <p>Hi {{ recipient_name }},</p>
+    <p><strong>{{ replier_name }}</strong> replied to your comment:</p>
+    <blockquote style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-left: 4px solid #007bff;">
+      {{ parent_comment }}
+    </blockquote>
+    <p>The reply:</p>
+    <blockquote style="margin: 10px 0; padding: 10px; background: #f1f1f1; border-left: 4px solid #28a745;">
+      {{ reply_text }}
+    </blockquote>
+    <p>Thank you for being part of our community!</p>
+    <p style="color: #888; font-size: 12px;">Resort Business Team</p>
+  </body>
+</html>

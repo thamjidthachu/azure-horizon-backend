@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import send_mail
+from utils.email import send_email_message
 from django.shortcuts import get_object_or_404
 from rest_framework import status, generics, permissions
 from rest_framework.pagination import PageNumberPagination
@@ -71,26 +71,33 @@ class ReviewReplyView(APIView):
 
     def post(self, request, comment_id, format=None):
         parent_comment = get_object_or_404(Comment, id=comment_id)
-        service = parent_comment.content_object
         reply_text = request.data.get('reply')
         if not reply_text:
             return Response({'detail': 'Reply text required.'}, status=status.HTTP_400_BAD_REQUEST)
         author = get_object_or_404(User, user_id=request.user.id)
-        reply = Comment.objects.create(
+        Comment.objects.create(
             content_type=ContentType.objects.get_for_model(Comment),
             object_id=parent_comment.id,
             message=reply_text,
             author=author,
         )
-        # Email notification
+        # Email notification using HTML template
         users = parent_comment.author
         user_obj = get_object_or_404(User, id=users.id)
         email = user_obj.user.email
-        subject = 'Resort Business'
-        message = f'Hi {users}, {author} replied on your Comment "{parent_comment}" as "{reply_text}"'
-        email_from = settings.EMAIL_HOST_USER
-        recipient_list = [email]
-        send_mail(subject, message, email_from, recipient_list)
+        subject = 'Resort Business - You have a new reply to your comment'
+        context = {
+            'recipient_name': str(users),
+            'replier_name': str(author),
+            'parent_comment': str(parent_comment),
+            'reply_text': reply_text,
+        }
+        send_email_message(
+            subject=subject,
+            template_name='comment_reply_notification.html',
+            context=context,
+            recipient_list=[email],
+        )
         return Response({'detail': 'Reply posted.'}, status=status.HTTP_201_CREATED)
 
 
