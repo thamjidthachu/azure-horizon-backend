@@ -177,4 +177,4 @@ class OrderItem(TimeStampedModel):
         ordering = ['id']
     
     def __str__(self):
-        return f"{self.service.name} x{self.quantity} - ${self.total_price}"
+        return f"{self.service.name} x {self.quantity} - ${self.total_price}"
