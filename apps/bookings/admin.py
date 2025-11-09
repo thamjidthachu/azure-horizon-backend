@@ -18,8 +18,7 @@ class BookingAdmin(admin.ModelAdmin):
     inlines = [PaymentInline]
     
     list_display = [
-        'booking_number', 'booking_date', 
-        'number_of_guests', 'status_badge', 'payment_status_badge', 
+        'booking_number', 'booking_date', 'number_of_guests', 'status_badge', 'payment_status_badge', 
         'total_amount', 'created_at'
     ]
     
@@ -30,8 +29,7 @@ class BookingAdmin(admin.ModelAdmin):
     ]
     
     readonly_fields = [
-        'booking_number', 'subtotal', 'tax', 'total_amount', 
-        'created_at', 'updated_at'
+        'booking_number', 'subtotal', 'tax', 'total_amount', 'created_at', 'updated_at'
     ]
     
     fieldsets = (
@@ -96,14 +94,13 @@ class BookingAdmin(admin.ModelAdmin):
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'booking', 'amount', 'payment_method', 
-        'payment_status_badge', 'transaction_id', 'payment_date'
+        'id', 'booking', 'amount', 'session_id', 'payment_method', 'payment_status_badge', 'transaction_id', 'payment_date'
     ]
     
     list_filter = ['payment_status', 'payment_method', 'payment_date']
     
     search_fields = [
-        'booking__booking_number', 'transaction_id',
+        'booking__booking_number', 'transaction_id', 'booking__user__email', 'session_id'
     ]
     
     readonly_fields = ['payment_date']

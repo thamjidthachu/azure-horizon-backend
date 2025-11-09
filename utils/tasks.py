@@ -1,15 +1,14 @@
 from celery import shared_task
 from django.contrib.auth import get_user_model
-import logging
-
-logger = logging.getLogger(__name__)
 User = get_user_model()
 
 @shared_task
 def test_celery_task(x, y):
     """Simple test task to verify Celery is working"""
+    import logging
+    celery_logger = logging.getLogger('system_logs')
     result = x + y
-    logger.info(f"Celery task executed: {x} + {y} = {result}")
+    celery_logger.info(f"Celery task executed: {x} + {y} = {result}")
     return result
 
 @shared_task
@@ -17,12 +16,11 @@ def send_welcome_email_task(user_id, password):
     """
     Alternative task to send welcome email - more modular approach
     """
+    import logging
+    celery_logger = logging.getLogger('system_logs')
     try:
         user = User.objects.get(id=user_id)
-        
-        # Import here to avoid circular imports
         from utils.email import send_email_message
-        
         send_email_message.delay(
             subject="Welcome to Azure Horizon | Login Details",
             template_name="welcome.html",
@@ -35,13 +33,11 @@ def send_welcome_email_task(user_id, password):
             },
             recipient_list=[user.email]
         )
-        
-        logger.info(f"Welcome email queued for user: {user.username}")
+        celery_logger.info(f"Welcome email queued for user: {user.username}")
         return True
-        
     except User.DoesNotExist:
-        logger.error(f"User with ID {user_id} not found")
+        celery_logger.error(f"User with ID {user_id} not found")
         return False
     except Exception as e:
-        logger.error(f"Error sending welcome email: {str(e)}")
+        celery_logger.error(f"Error sending welcome email: {str(e)}")
         return False

@@ -1,3 +1,6 @@
+import logging
+auth_logger = logging.getLogger('authentication')
+from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.crypto import get_random_string
 from rest_framework import status, generics
@@ -161,12 +164,13 @@ class ForgotPasswordView(APIView):
         token = get_random_string(32)
         user.reset_token = token
         user.save(update_fields=['reset_token'])
+        url = f"{settings.BASE_FRONTEND_URL}/reset-password/?token={token}&username={user.username}"
         # Send reset email
         # send_email_message.delay(
         send_email_message(
             subject="Password Reset Request",
             template_name="password-reset.html",
-            context={"reset_token": token, "email": user.email, "full_name": user.full_name},
+            context={"reset_url": url, "email": user.email, "full_name": user.full_name},
             recipient_list=[user.email]
         )
         return Response({"message": "Password reset instructions sent to your email."}, status=status.HTTP_200_OK)

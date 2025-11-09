@@ -38,6 +38,9 @@ MANIFEST
 *.manifest
 *.spec
 
+# Log files
+logs/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -85,7 +88,13 @@ resort_business_env/
 venv/
 ENV/
 media/
-static/
+staticfiles/
+# Keep source `static/` tracked (don't ignore it) so images like admin logos are in VCS
+# If you want to ignore source static as well, uncomment the next line
+# static/
+
+# Node modules (if present for local frontend tooling)
+node_modules/
 
 service_images
 

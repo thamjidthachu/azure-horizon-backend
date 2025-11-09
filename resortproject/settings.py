@@ -9,12 +9,17 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 import os
 from decouple import config
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Ensure logs directory exists before logging config
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -51,6 +56,52 @@ INSTALLED_APPS = [
     'apps.cart',
 
 ]
+
+# Jazzmin Admin Theme Settings
+JAZZMIN_SETTINGS = {
+    "site_title": "Azure Horizon",
+    "site_header": "Azure Horizon",
+    "site_brand": "Azure Horizon",
+    "site_logo": "admin/img/blue_in_indigo.jpg",
+    "login_logo": "admin/img/blue_in_indigo.jpg",
+    "login_logo_dark": None,
+    "site_logo_classes": "img-circle",
+    "site_icon": None,
+    "welcome_sign": "Welcome to Azure Horizon Admin",
+    "copyright": "Azure Horizon",
+    # Use the actual app_label.model_name for your custom user model
+    "search_model": ["authentication.user"],
+    "user_avatar": None,
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["authentication.view_user"]},
+        {"model": "authentication.user"},
+    ],
+    "usermenu_links": [
+        {"name": "Support", "url": "https://github.com/farridav/django-jazzmin/issues", "new_window": True},
+        {"model": "authentication.user"}
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["auth", "apps.authentication", "apps.service", "apps.contacts", "apps.bookings", "apps.cart"],
+    "custom_links": {},
+    "icons": {
+        # icons should reference the actual app_label.model_name where applicable
+        "authentication.user": "fas fa-user",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": False,
+    # point to a small custom css override to constrain the login logo
+    "custom_css": "jazzmin/css/custom_login.css",
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
+    "language_chooser": True,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,12 +196,6 @@ STATICFILES_DIRS = [
     static_dir,
 ]
 
-# Only include STATICFILES_DIRS if the static directory exists
-if os.path.exists(os.path.join(BASE_DIR, 'static')):
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
-    ]
-
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
@@ -171,6 +216,184 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'authentication.User'
 
 NEXT_FRONTEND_BASE_URL = config('NEXT_FRONTEND_BASE_URL', default='http://localhost:3000')
+
+
+# logging configurations
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(asctime)s  %(module)s %(filename)s %(funcName)s "
+                      "%(lineno)d %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        'server_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/server.log")
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+        'payment_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/payment.log")
+        },
+        'booking_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/booking.log")
+        },
+        'contact_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/contact.log")
+        },
+        'email_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/email.log")
+        },
+        'authentication_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/authentication.log")
+        },
+        'celery_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': str(BASE_DIR / "logs/celery.log")
+        },
+    },
+    "loggers": {
+        'server': {
+            'level': "INFO",
+            'handlers': ['server_file'],
+            'propagate': False
+        },
+        'django': {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": True
+        },
+        'django.request': {
+            "handlers": ['mail_admins'],
+            'propagate': False
+        },
+        'django.server': {
+            "handlers": ['mail_admins'],
+            'propagate': False
+        },
+        'payment': {
+            'level': "INFO",
+            'handlers': ['payment_file'],
+            'propagate': False
+        },
+        'booking': {
+            'level': "INFO",
+            'handlers': ['booking_file'],
+            'propagate': False
+        },
+        'contact': {
+            'level': "INFO",
+            'handlers': ['contact_file'],
+            'propagate': False
+        },
+        'email': {
+            'level': "INFO",
+            'handlers': ['email_file'],
+            'propagate': False
+        },
+        'authentication': {
+            'level': "INFO",
+            'handlers': ['authentication_file'],
+            'propagate': False
+        },
+        'celery': {
+            'level': "INFO",
+            'handlers': ['celery_file'],
+            'propagate': False
+        },
+    },
+}
+
+# configure ckeditor
+CKEDITOR_UPLOAD_PATH = "uploads/editor/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'skin': 'moono',
+        # 'skin': 'office2013',
+        'toolbar_Basic': [
+            ['Source', '-', 'Bold', 'Italic']
+        ],
+        'toolbar_YourCustomToolbarConfig': [
+            {'name': 'document', 'items': ['Source', '-', 'Save', 'NewPage', 'Preview', 'Print', '-', 'Templates']},
+            {'name': 'clipboard', 'items': ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo']},
+            {'name': 'editing', 'items': ['Find', 'Replace', '-', 'SelectAll']},
+            {'name': 'forms',
+             'items': ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton',
+                       'HiddenField']},
+            '/',
+            {'name': 'basicstyles',
+             'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat']},
+            {'name': 'paragraph',
+             'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-',
+                       'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'BidiLtr', 'BidiRtl',
+                       'Language']},
+            {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
+            {'name': 'insert',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe']},
+            '/',
+            {'name': 'styles', 'items': ['Styles', 'Format', 'Font', 'FontSize']},
+            {'name': 'colors', 'items': ['TextColor', 'BGColor']},
+            {'name': 'tools', 'items': ['Maximize', 'ShowBlocks']},
+            {'name': 'about', 'items': ['About']},
+            '/',  # put this to force next toolbar on new line
+            {'name': 'yourcustomtools', 'items': [
+                # put the name of your editor.ui.addButton here
+                'Preview',
+                'Maximize',
+
+            ]},
+        ],
+        'toolbar': 'YourCustomToolbarConfig',
+        'tabSpaces': 4,
+        'extraPlugins': ','.join([
+            'uploadimage',  # the upload image feature
+            # your extra plugins here
+            'div',
+            'autolink',
+            'autoembed',
+            'embedsemantic',
+            'autogrow',
+            # 'devtools',
+            'widget',
+            'lineutils',
+            'clipboard',
+            'dialog',
+            'dialogui',
+            'elementspath',
+            'language'
+        ]),
+        'removeDialogTabs': 'image:advanced;image:Link;image:info',
+    }
+}
 
 
 # Session settings

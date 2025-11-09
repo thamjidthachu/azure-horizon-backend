@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls.i18n import i18n_patterns
 
 from apps.authentication.views import HealthCheckView
 
@@ -29,4 +30,5 @@ urlpatterns = [
     path('bookings/', include('apps.bookings.urls'), name='bookings'),
     path('api/cart/', include('apps.cart.urls'), name='cart'),
     path('healthz/', HealthCheckView.as_view(), name='healthz'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('i18n/', include('django.conf.urls.i18n')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

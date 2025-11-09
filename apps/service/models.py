@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from django.contrib.contenttypes.models import ContentType
 
 from apps.authentication.models import User
-from apps.utils import ActiveModel, TimeStampedModel
+from utils import ActiveModel, TimeStampedModel
 
 
 class Advertisement(TimeStampedModel, ActiveModel):
@@ -21,7 +21,7 @@ class Advertisement(TimeStampedModel, ActiveModel):
 
 class Service(TimeStampedModel, ActiveModel):
     name = models.CharField(max_length=40)
-    slug = models.SlugField(unique=True, default=name)
+    slug = models.SlugField(unique=True, blank=True)
     synopsis = models.TextField(null=True)
     description = RichTextField(null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
