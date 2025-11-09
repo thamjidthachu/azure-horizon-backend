@@ -1,0 +1,76 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          set -e
+          
+          echo "🚀 Starting deployment..."
+          
+          # Navigate to project directory
+          cd ${{ secrets.PRODUCTION_PATH }}
+          
+          # Pull latest changes from GitHub
+          echo "📥 Pulling latest changes from master branch..."
+          git fetch origin
+          git reset --hard origin/master
+          
+          # Stop and remove existing containers
+          echo "� Stopping existing containers..."
+          docker-compose down || true
+          
+          # Build and start containers
+          echo "🔨 Building and starting Docker containers..."
+          docker-compose up --build -d
+          
+          # Wait for container to be healthy
+          echo "⏳ Waiting for container to be ready..."
+          sleep 10
+          
+          # Check container status
+          echo "📊 Container status:"
+          docker-compose ps
+          
+          # Show recent logs
+          echo "📝 Recent logs:"
+          docker-compose logs --tail=50 frontend
+          
+          echo "✅ Deployment completed successfully!"
+
+    - name: Cleanup local artifacts
+      if: always()
+      run: |
+        if [ -f deploy.tar.gz ]; then
+          rm deploy.tar.gz
+          echo "🧹 Cleaned up deployment artifacts"
+        fi
+
+    - name: Notify success
+      if: success()
+      run: |
+        echo "✅ Deployment to production completed successfully"
+        echo "🌐 Your application should be live at your server"
+        echo "📊 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "❌ Deployment to production failed"
+        echo "📊 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "🔍 Check the logs above for details"

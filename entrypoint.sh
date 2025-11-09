@@ -9,7 +9,7 @@ echo "Waiting for PostgreSQL..."
 TIMEOUT=300  # 5 minutes timeout
 ELAPSED=0
 
-until pg_isready -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -U "${DB_USER:-postgres}" -q; do
+until pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USER:-postgres}" -q; do
     echo "PostgreSQL is unavailable - sleeping"
     sleep 5
     ELAPSED=$((ELAPSED + 5))
