@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 
-# @shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def send_email_message(subject, template_name, context, recipient_list, from_email=None):
     """
     Utility function to send HTML emails with template
