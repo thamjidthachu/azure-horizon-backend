@@ -7,17 +7,15 @@ on:
     branches: [ master]
 
 jobs:
-
-
   build:
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
