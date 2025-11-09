@@ -47,7 +47,7 @@ jobs:
           
           # Show recent logs
           echo "📝 Recent logs:"
-          docker-compose logs --tail=50 frontend
+          docker-compose logs --tail=50 the_backend
           
           echo "✅ Deployment completed successfully!"
 
