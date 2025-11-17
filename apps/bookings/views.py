@@ -114,6 +114,7 @@ class BookingCancelView(APIView):
     
     def post(self, request, booking_number):
         booking = get_object_or_404(Booking, booking_number=booking_number)
+        reason = request.data.get('reason')
         if request.user.is_authenticated:
             if booking.user != request.user and not request.user.is_staff:
                 booking_logger.warning(f"Unauthorized booking cancel attempt: booking_number={booking.booking_number}, user_id={request.user.id}")
@@ -132,12 +133,20 @@ class BookingCancelView(APIView):
                 "error": f"Cannot cancel a booking that is already {booking.status}"
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Record cancellation reason into admin_notes for staff visibility
+        if reason:
+            existing = booking.admin_notes or ""
+            note = f"Cancellation reason: {reason}"
+            # keep previous admin notes and append the reason
+            booking.admin_notes = (existing + '\n' + note).strip()
+
         booking.status = BookingStatusChoices.CANCELLED
         booking.save()
         booking_logger.info(f"Booking cancelled: booking_number={booking.booking_number}")
         return Response({
             "message": "Booking cancelled successfully",
-            "booking_number": booking.booking_number
+            "booking_number": booking.booking_number,
+            "reason": reason
         }, status=status.HTTP_200_OK)
 
 

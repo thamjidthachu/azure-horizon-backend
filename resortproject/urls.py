@@ -20,6 +20,7 @@ from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 
 from apps.authentication.views import HealthCheckView
+from apps.bookings.views import BookingCancelView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,7 +28,7 @@ urlpatterns = [
     path('api/auth/', include('apps.authentication.urls'), name='api-auth'),
     path('services/', include('apps.service.urls'), name='services'),
     path('contacts/', include('apps.contacts.urls'), name='contacts'),
-    path('bookings/', include('apps.bookings.urls'), name='bookings'),
+    path('api/bookings/', include('apps.bookings.urls'), name='bookings'),
     path('api/cart/', include('apps.cart.urls'), name='cart'),
     path('healthz/', HealthCheckView.as_view(), name='healthz'),
     path('i18n/', include('django.conf.urls.i18n')),
