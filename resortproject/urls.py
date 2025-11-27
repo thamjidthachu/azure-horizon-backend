@@ -20,15 +20,16 @@ from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 
 from apps.authentication.views import HealthCheckView
+from apps.bookings.views import BookingCancelView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('authentication/', include("django.contrib.auth.urls"), name='authentication'),  # Django's built-in auth
-    path('api/auth/', include('apps.authentication.urls'), name='api-auth'),
-    path('services/', include('apps.service.urls'), name='services'),
-    path('contacts/', include('apps.contacts.urls'), name='contacts'),
-    path('bookings/', include('apps.bookings.urls'), name='bookings'),
-    path('api/cart/', include('apps.cart.urls'), name='cart'),
-    path('healthz/', HealthCheckView.as_view(), name='healthz'),
+    path('authentication/', include("django.contrib.auth.urls"), name='authentication'),
     path('i18n/', include('django.conf.urls.i18n')),
+    path('healthz/', HealthCheckView.as_view(), name='healthz'),
+    path('api/v1/auth/', include('apps.authentication.urls'), name='api-auth'),
+    path('api/v1/services/', include('apps.service.urls'), name='services'),
+    path('api/v1/contacts/', include('apps.contacts.urls'), name='contacts'),
+    path('api/v1/bookings/', include('apps.bookings.urls'), name='bookings'),
+    path('api/v1/cart/', include('apps.cart.urls'), name='cart'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
