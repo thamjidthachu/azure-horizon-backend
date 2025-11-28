@@ -128,3 +128,55 @@ class PasswordResetSerializer(serializers.Serializer):
                 ).exists():
             raise serializers.ValidationError("Invalid token or email/username.")
         return attrs
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user profile information"""
+    
+    class Meta:
+        model = User
+        fields = ['username', 'full_name', 'email', 'phone', 'gender']
+        extra_kwargs = {
+            'username': {'required': False},
+            'full_name': {'required': False},
+            'email': {'required': False},
+            'phone': {'required': False},
+            'gender': {'required': False},
+        }
+
+    def validate_username(self, value):
+        """Ensure username is unique (excluding current user)"""
+        user = self.instance
+        if User.objects.filter(username=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("This username is already in use.")
+        return value
+
+    def validate_email(self, value):
+        """Ensure email is unique (excluding current user)"""
+        user = self.instance
+        if User.objects.filter(email=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("This email is already in use.")
+        return value
+
+
+class AvatarUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user avatar"""
+    
+    class Meta:
+        model = User
+        fields = ['avatar']
+
+    def validate_avatar(self, value):
+        """Validate avatar file"""
+        if value:
+            # Check file size (limit to 5MB)
+            if value.size > 5 * 1024 * 1024:
+                raise serializers.ValidationError("Avatar file size should not exceed 5MB.")
+            
+            # Check file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+            if value.content_type not in allowed_types:
+                raise serializers.ValidationError(
+                    "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed."
+                )
+        return value
