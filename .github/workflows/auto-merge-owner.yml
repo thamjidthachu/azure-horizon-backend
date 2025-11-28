@@ -1,0 +1,86 @@
+name: Auto-merge Owner PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  check_suite:
+    types: [completed]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    
+    steps:
+      - name: Check if PR author is repository owner
+        id: check_owner
+        run: |
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          REPO_OWNER="${{ github.repository_owner }}"
+          
+          echo "PR Author: $PR_AUTHOR"
+          echo "Repository Owner: $REPO_OWNER"
+          
+          if [ "$PR_AUTHOR" = "$REPO_OWNER" ]; then
+            echo "is_owner=true" >> $GITHUB_OUTPUT
+            echo "✅ PR author is the repository owner"
+          else
+            echo "is_owner=false" >> $GITHUB_OUTPUT
+            echo "❌ PR author is NOT the repository owner"
+          fi
+      
+      - name: Wait for CI checks
+        if: steps.check_owner.outputs.is_owner == 'true'
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'build'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success,skipped
+        continue-on-error: true
+      
+      - name: Enable auto-merge
+        if: steps.check_owner.outputs.is_owner == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Enable auto-merge
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash', // or 'merge' or 'rebase'
+                commit_title: `${pr.title} (#${pr.number})`,
+                commit_message: pr.body || ''
+              });
+              
+              console.log('✅ PR auto-merged successfully');
+              
+              // Add a comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '✅ **Auto-merged**: This PR was automatically merged because the author is the repository owner and all checks passed.'
+              });
+            } catch (error) {
+              console.log('⚠️ Auto-merge failed:', error.message);
+              
+              // If merge fails, just approve instead
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                event: 'APPROVE',
+                body: '✅ **Auto-approved**: This PR was automatically approved because the author is the repository owner.'
+              });
+            }
