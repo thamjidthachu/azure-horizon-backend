@@ -1,0 +1,158 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - master
+
+jobs:
+  # Job 1: Build, Test, and PR Automation
+  build-and-merge:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    # Service containers for tests
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
+          echo "DEBUG=${{ secrets.DEBUG }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_HOST=postgres" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "EMAIL=${{ secrets.EMAIL }}" >> .env
+          echo "DEFAULT_EMAIL=${{ secrets.DEFAULT_EMAIL }}" >> .env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
+          echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" >> .env
+          echo "CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}" >> .env
+          echo "NEXT_FRONTEND_BASE_URL=${{ secrets.NEXT_FRONTEND_BASE_URL }}" >> .env
+          echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
+          echo "CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}" >> .env
+          echo "CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}" >> .env
+          echo "BASE_FRONTEND_URL=${{ secrets.BASE_FRONTEND_URL }}" >> .env
+          echo "STRIPE_API_KEY=${{ secrets.STRIPE_API_KEY }}" >> .env
+          echo "STRIPE_SECRET=${{ secrets.STRIPE_SECRET }}" >> .env
+          echo "PAYMENT_SUCCESS_URL=${{ secrets.PAYMENT_SUCCESS_URL }}" >> .env
+          echo "PAYMENT_CANCEL_URL=${{ secrets.PAYMENT_CANCEL_URL }}" >> .env
+
+      - name: Wait for Postgres to be ready
+        run: |
+          for i in {1..30}; do
+            nc -z postgres 5432 && echo "Postgres is up!" && break
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+          nc -z postgres 5432 || (echo "Postgres did not become available in time!" && exit 1)
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate
+
+      - name: Lint with flake8
+        run: |
+          flake8 .
+
+      - name: Run tests
+        run: |
+          python manage.py test
+
+      # --- Auto-Merge Logic (Runs only if tests pass) ---
+
+      - name: Check if PR author is repository owner
+        id: check_owner
+        if: success() # Only run if tests passed
+        run: |
+          if [ "${{ github.actor }}" == "${{ github.repository_owner }}" ]; then
+            echo "is_owner=true" >> $GITHUB_OUTPUT
+            echo "✅ PR author is the repository owner."
+          else
+            echo "is_owner=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ PR author is NOT the repository owner. Manual approval required."
+          fi
+
+      - name: Auto-merge for Owner
+        if: steps.check_owner.outputs.is_owner == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              merge_method: 'squash',
+              commit_title: `${pr.title} (#${pr.number})`,
+              commit_message: pr.body || ''
+            });
+            console.log('✅ Auto-merged PR');
+
+      - name: Notify for Non-Owner
+        if: steps.check_owner.outputs.is_owner == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 Thanks for the PR! Tests passed ✅. Since you are not the repository owner, this PR requires manual approval from the owner before merging.'
+            });
+
+  # Job 2: Deployment (Runs only on push to master)
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Deploy to Server
+        run: |
+          # Sync files
+          rsync -avz --exclude 'logs/' --exclude '.git/' --exclude '.env' ./ ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${{ secrets.PROD_PATH }}
+          
+          # Restart services
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "cd ${{ secrets.PROD_PATH }} && docker compose pull && docker compose down && docker compose up -d --build"
+          
