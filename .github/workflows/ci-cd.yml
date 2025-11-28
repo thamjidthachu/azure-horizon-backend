@@ -8,137 +8,155 @@ on:
       - master
 
 jobs:
-  # Job 1: Build, Test, and PR Automation
-  build-and-merge:
-    if: github.event_name == 'pull_request'
+  # ============================================
+  # Job 1: Build and Test (runs on all PRs and pushes)
+  # ============================================
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    
-    # Service containers for tests
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: '18'
+          cache: 'yarn'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install flake8
+        run: yarn install --frozen-lockfile
 
-      - name: Create .env file
-        run: |
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
-          echo "DEBUG=${{ secrets.DEBUG }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "DB_HOST=postgres" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "EMAIL=${{ secrets.EMAIL }}" >> .env
-          echo "DEFAULT_EMAIL=${{ secrets.DEFAULT_EMAIL }}" >> .env
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
-          echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" >> .env
-          echo "CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}" >> .env
-          echo "NEXT_FRONTEND_BASE_URL=${{ secrets.NEXT_FRONTEND_BASE_URL }}" >> .env
-          echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
-          echo "CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}" >> .env
-          echo "CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}" >> .env
-          echo "BASE_FRONTEND_URL=${{ secrets.BASE_FRONTEND_URL }}" >> .env
-          echo "STRIPE_API_KEY=${{ secrets.STRIPE_API_KEY }}" >> .env
-          echo "STRIPE_SECRET=${{ secrets.STRIPE_SECRET }}" >> .env
-          echo "PAYMENT_SUCCESS_URL=${{ secrets.PAYMENT_SUCCESS_URL }}" >> .env
-          echo "PAYMENT_CANCEL_URL=${{ secrets.PAYMENT_CANCEL_URL }}" >> .env
+      - name: Lint code
+        run: yarn lint
 
-      - name: Wait for Postgres to be ready
-        run: |
-          for i in {1..30}; do
-            nc -z postgres 5432 && echo "Postgres is up!" && break
-            echo "Waiting for Postgres..."
-            sleep 2
-          done
-          nc -z postgres 5432 || (echo "Postgres did not become available in time!" && exit 1)
-
-      - name: Run migrations
-        run: |
-          python manage.py migrate
-
-      - name: Lint with flake8
-        run: |
-          flake8 .
+      - name: Build project
+        run: yarn build
 
       - name: Run tests
-        run: |
-          python manage.py test
+        run: yarn test
 
-      # --- Auto-Merge Logic (Runs only if tests pass) ---
+  # ============================================
+  # Job 2: PR Handler (auto-merge owner PRs, request approval for others)
+  # ============================================
+  pr-handler:
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    
+    steps:
+      - name: Check PR template is filled
+        id: check_template
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            // Basic validation: check if PR has content and not just template
+            const hasContent = body.length > 100 && !body.includes('<!-- Briefly explain');
+            
+            if (!hasContent) {
+              console.log('⚠️ PR template appears to be incomplete');
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '⚠️ **PR Template Incomplete**: Please fill out the PR template with details about your changes.'
+              });
+              
+              core.setOutput('template_filled', 'false');
+            } else {
+              console.log('✅ PR template appears to be filled');
+              core.setOutput('template_filled', 'true');
+            }
 
       - name: Check if PR author is repository owner
         id: check_owner
-        if: success() # Only run if tests passed
         run: |
-          if [ "${{ github.actor }}" == "${{ github.repository_owner }}" ]; then
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          REPO_OWNER="${{ github.repository_owner }}"
+          
+          echo "PR Author: $PR_AUTHOR"
+          echo "Repository Owner: $REPO_OWNER"
+          
+          if [ "$PR_AUTHOR" = "$REPO_OWNER" ]; then
             echo "is_owner=true" >> $GITHUB_OUTPUT
-            echo "✅ PR author is the repository owner."
+            echo "✅ PR author is the repository owner"
           else
             echo "is_owner=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ PR author is NOT the repository owner. Manual approval required."
+            echo "❌ PR author is NOT the repository owner"
           fi
 
-      - name: Auto-merge for Owner
-        if: steps.check_owner.outputs.is_owner == 'true'
+      - name: Auto-merge owner PR
+        if: steps.check_owner.outputs.is_owner == 'true' && steps.check_template.outputs.template_filled == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const pr = context.payload.pull_request;
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-              merge_method: 'squash',
-              commit_title: `${pr.title} (#${pr.number})`,
-              commit_message: pr.body || ''
-            });
-            console.log('✅ Auto-merged PR');
+            
+            try {
+              // Attempt to merge the PR
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash',
+                commit_title: `${pr.title} (#${pr.number})`,
+                commit_message: pr.body || ''
+              });
+              
+              console.log('✅ PR auto-merged successfully');
+              
+              // Add success comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '✅ **Auto-merged**: PR automatically merged because you are the repository owner and all checks passed.'
+              });
+            } catch (error) {
+              console.log('⚠️ Auto-merge failed:', error.message);
+              
+              // Add comment explaining the issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `⚠️ **Auto-merge attempted but failed**: ${error.message}\n\nYou may need to merge manually or check branch protection settings.`
+              });
+            }
 
-      - name: Notify for Non-Owner
+      - name: Request approval for non-owner PR
         if: steps.check_owner.outputs.is_owner == 'false'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const pr = context.payload.pull_request;
+            
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '👋 Thanks for the PR! Tests passed ✅. Since you are not the repository owner, this PR requires manual approval from the owner before merging.'
+              issue_number: pr.number,
+              body: '👋 **Manual Review Required**: This PR requires approval from the repository owner (@${{ github.repository_owner }}) before it can be merged.'
             });
+            
+            console.log('📝 Added comment requesting owner approval');
 
-  # Job 2: Deployment (Runs only on push to master)
+  # ============================================
+  # Job 3: Deploy to Production (runs after merge to master)
+  # ============================================
   deploy:
+    needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    needs: []
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,13 +164,67 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to Server
+      - name: Add server to known hosts
         run: |
-          # Sync files
-          rsync -avz --exclude 'logs/' --exclude '.git/' --exclude '.env' ./ ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${{ secrets.PROD_PATH }}
-          
-          # Restart services
-          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "cd ${{ secrets.PROD_PATH }} && docker compose pull && docker compose down && docker compose up -d --build"
-          
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+          echo "✅ Added server to known hosts"
+
+      - name: Copy files to production server
+        run: |
+          echo "📦 Syncing files to production server..."
+          rsync -avz --delete \
+            --exclude 'logs/' \
+            --exclude '.git/' \
+            --exclude '.env' \
+            --exclude 'node_modules/' \
+            --exclude '.next/' \
+            ./ ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:${{ secrets.PRODUCTION_PATH }}
+          echo "✅ Files synced successfully"
+
+      - name: Deploy on production server
+        run: |
+          echo "🚀 Starting deployment on production server..."
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'ENDSSH'
+            cd ${{ secrets.PRODUCTION_PATH }}
+            
+            # Use docker compose (newer) or docker-compose (older)
+            if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+              echo "Using 'docker compose' (newer syntax)"
+              docker compose pull
+              docker compose down
+              docker compose up -d --build
+            elif command -v docker-compose &> /dev/null; then
+              echo "Using 'docker-compose' (older syntax)"
+              docker-compose pull
+              docker-compose down
+              docker-compose up -d --build
+            else
+              echo "❌ Error: Neither 'docker compose' nor 'docker-compose' found"
+              exit 1
+            fi
+            
+            echo "✅ Deployment completed"
+          ENDSSH
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} \
+            "cd ${{ secrets.PRODUCTION_PATH }} && (docker compose ps || docker-compose ps)"
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ 🎉 Deployment to production successful!"
+          echo "Deployed commit: ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Deployment to production failed!"
+          echo "Please check the logs above for details."
+          exit 1
