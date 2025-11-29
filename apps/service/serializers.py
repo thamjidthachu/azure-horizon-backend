@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.authentication.serializers import UserSerializer
-from .models import File, Service, Comment, Advertisement
+from .models import File, Service, Comment, Advertisement, Favorite
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -14,10 +14,11 @@ class ServiceListSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True, source='file_set')
     rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
-        fields = ['id', 'slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count',]
+        fields = ['id', 'slug', 'name', 'price', 'unit', 'time', 'files','synopsis', 'rating', 'review_count', 'is_favorite']
 
     @staticmethod
     def get_rating(obj):
@@ -31,11 +32,18 @@ class ServiceListSerializer(serializers.ModelSerializer):
     def get_review_count(obj):
         return obj.service_comment.count()
 
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Favorite.objects.filter(user=request.user, service=obj).exists()
+        return False
+
 class ServicesSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True, source='file_set')
     rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
     class Meta:
         model = Service
         fields = '__all__'
@@ -58,6 +66,12 @@ class ServicesSerializer(serializers.ModelSerializer):
         comments = obj.service_comment.all()
         return CommentsSerializer(comments, many=True).data if comments.exists() else None
 
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Favorite.objects.filter(user=request.user, service=obj).exists()
+        return False
+
 
 class CommentsSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
@@ -70,3 +84,15 @@ class AdvertiseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advertisement
         fields = ['title', 'file', 'link']
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    service = ServiceListSerializer(read_only=True)
+    service_id = serializers.PrimaryKeyRelatedField(
+        queryset=Service.objects.all(), source='service', write_only=True
+    )
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'service', 'service_id', 'created_at']
+

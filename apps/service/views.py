@@ -2,15 +2,15 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from utils.email import send_email_message
 from django.shortcuts import get_object_or_404
-from rest_framework import status, generics, permissions
+from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from resortproject import settings
-from .models import Service, Comment, Advertisement
-from .serializers import ServicesSerializer, CommentsSerializer, ServiceListSerializer, AdvertiseSerializer
+from .models import Service, Comment, Advertisement, Favorite
+from .serializers import ServicesSerializer, CommentsSerializer, ServiceListSerializer, AdvertiseSerializer, FavoriteSerializer
 
 
 class HomeView(APIView):
@@ -22,18 +22,18 @@ class HomeView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ServiceListView(generics.ListAPIView):
+class ServiceListView(ListAPIView):
     queryset = Service.objects.order_by('-create_time')
     serializer_class = ServiceListSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     pagination_class = None
 
 
-class ServiceDetailView(generics.RetrieveAPIView):
+class ServiceDetailView(RetrieveAPIView):
     queryset = Service.objects.all()
     serializer_class = ServicesSerializer
     lookup_field = 'slug'
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
 
 class CustomPagination(PageNumberPagination):
@@ -42,7 +42,7 @@ class CustomPagination(PageNumberPagination):
     max_page_size = 100
     page_query_param = 'page'
 
-class ServiceReviewsView(generics.ListCreateAPIView):
+class ServiceReviewsView(ListCreateAPIView):
     serializer_class = CommentsSerializer
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
@@ -67,7 +67,7 @@ class ServiceReviewsView(generics.ListCreateAPIView):
 
 
 class ReviewReplyView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, comment_id, format=None):
         parent_comment = get_object_or_404(Comment, id=comment_id)
@@ -101,8 +101,32 @@ class ReviewReplyView(APIView):
         return Response({'detail': 'Reply posted.'}, status=status.HTTP_201_CREATED)
 
 
-class AdvertiseView(generics.ListAPIView):
+class AdvertiseView(ListAPIView):
     queryset = Advertisement.objects.filter(is_active=True).order_by('-id')[:5]
     serializer_class = AdvertiseSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     pagination_class = None
+
+
+class FavoriteListCreateView(ListCreateAPIView):
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return Favorite.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class FavoriteDeleteView(DestroyAPIView):
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'service_id'
+    lookup_url_kwarg = 'service_id'
+
+    def get_queryset(self):
+        service_id = self.kwargs.get('service_id')
+        service = get_object_or_404(Service, id=service_id)
+        return Favorite.objects.filter(user=self.request.user, service=service)

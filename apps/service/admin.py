@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
-from .models import Service, File, Comment, Advertisement
+from .models import Service, File, Comment, Advertisement, Favorite
 
 
 # Register your models here.
@@ -37,3 +37,5 @@ class ServiceAdmin(admin.ModelAdmin):
 
 admin.site.register(Service, ServiceAdmin)
 admin.site.register(Advertisement)
+admin.site.register(Favorite)
+
