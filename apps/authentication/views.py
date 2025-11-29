@@ -26,13 +26,6 @@ from utils.email import send_email_message
 User = get_user_model()
 
 
-class HealthCheckView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, format=None):
-        return Response({'status': 'ok', 'application': 'Azure Horizon', "version": "0.0.1"}, status=status.HTTP_200_OK)
-
-
 class UserCheckView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = UserSerializer

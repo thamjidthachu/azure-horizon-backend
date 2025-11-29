@@ -19,14 +19,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 
-from apps.authentication.views import HealthCheckView
-from apps.bookings.views import BookingCancelView
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('authentication/', include("django.contrib.auth.urls"), name='authentication'),
     path('i18n/', include('django.conf.urls.i18n')),
-    path('healthz/', HealthCheckView.as_view(), name='healthz'),
+    path('', include('apps.index.urls'), name='api-index'),
     path('api/v1/auth/', include('apps.authentication.urls'), name='api-auth'),
     path('api/v1/services/', include('apps.service.urls'), name='services'),
     path('api/v1/contacts/', include('apps.contacts.urls'), name='contacts'),

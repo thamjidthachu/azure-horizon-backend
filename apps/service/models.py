@@ -65,3 +65,14 @@ class Comment(TimeStampedModel, ActiveModel):
 
     def __str__(self):
         return self.message
+
+
+class Favorite(TimeStampedModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='favorited_by')
+
+    class Meta:
+        unique_together = ('user', 'service')
+
+    def __str__(self):
+        return f"{self.user.email} - {self.service.name}"
