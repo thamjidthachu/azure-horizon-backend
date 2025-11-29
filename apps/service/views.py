@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from utils.email import send_email_message
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
-from rest_framework import status
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -19,7 +19,7 @@ class HomeView(APIView):
     def get(self, request, format=None):
         services = Service.objects.order_by('-create_time')[:3]
         serializer = ServicesSerializer(services, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
 class ServiceListView(ListAPIView):
@@ -73,7 +73,7 @@ class ReviewReplyView(APIView):
         parent_comment = get_object_or_404(Comment, id=comment_id)
         reply_text = request.data.get('reply')
         if not reply_text:
-            return Response({'detail': 'Reply text required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Reply text required.'}, status=HTTP_400_BAD_REQUEST)
         author = get_object_or_404(User, user_id=request.user.id)
         Comment.objects.create(
             content_type=ContentType.objects.get_for_model(Comment),
@@ -98,7 +98,7 @@ class ReviewReplyView(APIView):
             context=context,
             recipient_list=[email],
         )
-        return Response({'detail': 'Reply posted.'}, status=status.HTTP_201_CREATED)
+        return Response({'detail': 'Reply posted.'}, status=HTTP_201_CREATED)
 
 
 class AdvertiseView(ListAPIView):
@@ -127,6 +127,4 @@ class FavoriteDeleteView(DestroyAPIView):
     lookup_url_kwarg = 'service_id'
 
     def get_queryset(self):
-        service_id = self.kwargs.get('service_id')
-        service = get_object_or_404(Service, id=service_id)
-        return Favorite.objects.filter(user=self.request.user, service=service)
+        return Favorite.objects.filter(user=self.request.user, service__id=self.kwargs.get('service_id'))

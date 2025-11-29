@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # apps
+    'apps.index',
     'apps.authentication',
     'apps.service',
     'apps.contacts',

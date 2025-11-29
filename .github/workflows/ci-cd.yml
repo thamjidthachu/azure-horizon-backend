@@ -1,4 +1,23 @@
-name: CI/CD Pipeline
+name: Backend CI/CD Pipeline
+
+env:
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  DEBUG: ${{ secrets.DEBUG }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_USER: ${{ secrets.DB_USER }}
+  CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+  CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+  DEFAULT_EMAIL: ${{ secrets.DEFAULT_EMAIL }}
+  EMAIL: ${{ secrets.EMAIL }}
+  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+  NEXT_FRONTEND_BASE_URL: ${{ secrets.NEXT_FRONTEND_BASE_URL }}
+  PAYMENT_CANCEL_URL: ${{ secrets.PAYMENT_CANCEL_URL }}
+  PAYMENT_SUCCESS_URL: ${{ secrets.PAYMENT_SUCCESS_URL }}
+  STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+  STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
 
 on:
   pull_request:
@@ -6,38 +25,54 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
-  # ============================================
-  # Job 1: Build and Test (runs on all PRs and pushes)
-  # ============================================
   build:
+    name: Build and Test
     runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: resortproject.settings
+      DB_HOST: localhost
+      DB_PORT: 5432
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }}"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '18'
-          cache: 'yarn'
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Lint code
-        run: yarn lint
+      - name: Run database migrations
+        run: python manage.py migrate --noinput
 
-      - name: Build project
-        run: yarn build
+      - name: Collect static files
+        run: python manage.py collectstatic --noinput
 
       - name: Run tests
-        run: yarn test
+        run: python manage.py test
 
-  # ============================================
-  # Job 2: PR Handler (auto-merge owner PRs, request approval for others)
-  # ============================================
   pr-handler:
     needs: build
     if: github.event_name == 'pull_request'
@@ -55,41 +90,34 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const body = pr.body || '';
-            
-            // Basic validation: check if PR has content and not just template
             const hasContent = body.length > 100 && !body.includes('<!-- Briefly explain');
             
             if (!hasContent) {
-              console.log('⚠️ PR template appears to be incomplete');
-              
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr.number,
-                body: '⚠️ **PR Template Incomplete**: Please fill out the PR template with details about your changes.'
+                body: '**PR Template Incomplete**: Please fill out the PR template with details about your changes.'
               });
               
               core.setOutput('template_filled', 'false');
             } else {
-              console.log('✅ PR template appears to be filled');
               core.setOutput('template_filled', 'true');
             }
 
       - name: Check if PR author is repository owner
         id: check_owner
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-          REPO_OWNER="${{ github.repository_owner }}"
-          
           echo "PR Author: $PR_AUTHOR"
           echo "Repository Owner: $REPO_OWNER"
           
           if [ "$PR_AUTHOR" = "$REPO_OWNER" ]; then
             echo "is_owner=true" >> $GITHUB_OUTPUT
-            echo "✅ PR author is the repository owner"
           else
             echo "is_owner=false" >> $GITHUB_OUTPUT
-            echo "❌ PR author is NOT the repository owner"
           fi
 
       - name: Auto-merge owner PR
@@ -101,7 +129,6 @@ jobs:
             const pr = context.payload.pull_request;
             
             try {
-              // Attempt to merge the PR
               await github.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -111,24 +138,18 @@ jobs:
                 commit_message: pr.body || ''
               });
               
-              console.log('✅ PR auto-merged successfully');
-              
-              // Add success comment
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr.number,
-                body: '✅ **Auto-merged**: PR automatically merged because you are the repository owner and all checks passed.'
+                body: '**Auto-merged**: PR automatically merged because you are the repository owner and all checks passed.'
               });
             } catch (error) {
-              console.log('⚠️ Auto-merge failed:', error.message);
-              
-              // Add comment explaining the issue
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr.number,
-                body: `⚠️ **Auto-merge attempted but failed**: ${error.message}\n\nYou may need to merge manually or check branch protection settings.`
+                body: `**Auto-merge attempted but failed**: ${error.message}\n\nYou may need to merge manually or check branch protection settings.`
               });
             }
 
@@ -144,22 +165,31 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr.number,
-              body: '👋 **Manual Review Required**: This PR requires approval from the repository owner (@${{ github.repository_owner }}) before it can be merged.'
+              body: `**Manual Review Required**: This PR requires approval from the repository owner (@${{ github.repository_owner }}) before it can be merged.`
             });
-            
-            console.log('📝 Added comment requesting owner approval');
 
-  # ============================================
-  # Job 3: Deploy to Production (runs after merge to master)
-  # ============================================
   deploy:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate deploy secrets
+        run: |
+          missing=""
+          [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && missing="$missing SSH_PRIVATE_KEY"
+          [ -z "${{ secrets.PRODUCTION_USER }}" ] && missing="$missing PRODUCTION_USER"
+          [ -z "${{ secrets.PRODUCTION_HOST }}" ] && missing="$missing PRODUCTION_HOST"
+          [ -z "${{ secrets.PRODUCTION_PATH }}" ] && missing="$missing PRODUCTION_PATH"
+          
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required deployment secrets:$missing"
+            echo "Add these under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -170,61 +200,53 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
-          echo "✅ Added server to known hosts"
 
       - name: Copy files to production server
         run: |
-          echo "📦 Syncing files to production server..."
           rsync -avz --delete \
             --exclude 'logs/' \
             --exclude '.git/' \
             --exclude '.env' \
-            --exclude 'node_modules/' \
-            --exclude '.next/' \
+            --exclude '.venv/' \
+            --exclude '__pycache__/' \
+            --exclude 'media/' \
             ./ ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:${{ secrets.PRODUCTION_PATH }}
-          echo "✅ Files synced successfully"
 
       - name: Deploy on production server
         run: |
-          echo "🚀 Starting deployment on production server..."
-          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'ENDSSH'
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} <<'ENDSSH'
             cd ${{ secrets.PRODUCTION_PATH }}
             
-            # Use docker compose (newer) or docker-compose (older)
             if command -v docker &> /dev/null && docker compose version &> /dev/null; then
-              echo "Using 'docker compose' (newer syntax)"
               docker compose pull
               docker compose down
               docker compose up -d --build
+              docker compose exec -T backend python manage.py migrate --noinput
             elif command -v docker-compose &> /dev/null; then
-              echo "Using 'docker-compose' (older syntax)"
               docker-compose pull
               docker-compose down
               docker-compose up -d --build
+              docker-compose exec -T backend python manage.py migrate --noinput
             else
-              echo "❌ Error: Neither 'docker compose' nor 'docker-compose' found"
+              echo "Neither docker compose nor docker-compose is available on the server."
               exit 1
             fi
-            
-            echo "✅ Deployment completed"
           ENDSSH
 
       - name: Verify deployment
         run: |
-          echo "🔍 Verifying deployment..."
           ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} \
             "cd ${{ secrets.PRODUCTION_PATH }} && (docker compose ps || docker-compose ps)"
 
       - name: Notify deployment success
         if: success()
         run: |
-          echo "✅ 🎉 Deployment to production successful!"
+          echo "Deployment to production successful."
           echo "Deployed commit: ${{ github.sha }}"
           echo "Deployed by: ${{ github.actor }}"
 
       - name: Notify deployment failure
         if: failure()
         run: |
-          echo "❌ Deployment to production failed!"
-          echo "Please check the logs above for details."
+          echo "Deployment to production failed. Check the logs above for details."
           exit 1
