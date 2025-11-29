@@ -219,14 +219,16 @@ jobs:
             
             if command -v docker &> /dev/null && docker compose version &> /dev/null; then
               docker compose pull
+              docker compose build backend
               docker compose down
+              docker compose run --rm backend python manage.py migrate --noinput
               docker compose up -d --build
-              docker compose exec -T backend python manage.py migrate --noinput
             elif command -v docker-compose &> /dev/null; then
               docker-compose pull
+              docker-compose build backend
               docker-compose down
+              docker-compose run --rm backend python manage.py migrate --noinput
               docker-compose up -d --build
-              docker-compose exec -T backend python manage.py migrate --noinput
             else
               echo "Neither docker compose nor docker-compose is available on the server."
               exit 1
